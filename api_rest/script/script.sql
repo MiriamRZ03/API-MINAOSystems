@@ -1,5 +1,15 @@
+-- =========================================================
+-- 📘 MINAO SYSTEMS — Base de datos (versión corregida)
+-- Diseño: Lilly & Miriam | Revisión: ChatGPT
+-- =========================================================
+
+DROP DATABASE IF EXISTS MINAO;
+CREATE DATABASE MINAO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE MINAO;
 
+-- =========================================================
+-- 1️⃣ Tabla base de usuarios
+-- =========================================================
 CREATE TABLE IF NOT EXISTS User (
     userId INT AUTO_INCREMENT PRIMARY KEY,
     userName VARCHAR(75) NOT NULL,
@@ -10,9 +20,12 @@ CREATE TABLE IF NOT EXISTS User (
     userType ENUM('Instructor', 'Student') NOT NULL
 );
 
+-- =========================================================
+-- 2️⃣ Catálogos
+-- =========================================================
 CREATE TABLE IF NOT EXISTS Title (
     titleId INT AUTO_INCREMENT PRIMARY KEY,
-    titleName VARCHAR(50) UNIQUE NOT NULL   
+    titleName VARCHAR(50) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS EducationLevel (
@@ -20,15 +33,18 @@ CREATE TABLE IF NOT EXISTS EducationLevel (
     levelName VARCHAR(50) UNIQUE NOT NULL
 );
 
+-- =========================================================
+-- 3️⃣ Subclases que heredan de User
+-- =========================================================
 CREATE TABLE IF NOT EXISTS Instructor (
     instructorId INT PRIMARY KEY,
-    title INT, 
+    titleId INT,                         -- 🔹 corregido: columna correcta
     biography VARCHAR(500),
     FOREIGN KEY (instructorId) REFERENCES User(userId) ON DELETE CASCADE,
     FOREIGN KEY (titleId) REFERENCES Title(titleId) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS Student(
+CREATE TABLE IF NOT EXISTS Student (
     studentId INT PRIMARY KEY,
     levelId INT NOT NULL,
     average DECIMAL(5,2),
@@ -36,14 +52,17 @@ CREATE TABLE IF NOT EXISTS Student(
     FOREIGN KEY (levelId) REFERENCES EducationLevel(levelId) ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS Curso(
-    cursoId INT PRIMARY KEY,
-    name VARCHAR(70), 
+-- =========================================================
+-- 4️⃣ Cursos y contenidos
+-- =========================================================
+CREATE TABLE IF NOT EXISTS Curso (
+    cursoId INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(70) NOT NULL,
     description VARCHAR(300),
     category VARCHAR(70),
     startDate DATE,
     endDate DATE,
-    state ENUM('Activo', 'Inactivo') NOT NULL,
+    state ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo',
     instructorId INT NOT NULL,
     FOREIGN KEY (instructorId) REFERENCES User(userId) ON DELETE CASCADE
 );
@@ -61,7 +80,7 @@ CREATE TABLE IF NOT EXISTS Quiz (
     quizId INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     description VARCHAR(300),
-    creationDate DATE,
+    creationDate DATE DEFAULT (CURRENT_DATE),
     numberQuestion INT,
     weighing DECIMAL(5,2),
     cursoId INT NOT NULL,
@@ -70,6 +89,9 @@ CREATE TABLE IF NOT EXISTS Quiz (
     FOREIGN KEY (contentId) REFERENCES Content(contentId) ON DELETE CASCADE
 );
 
+-- =========================================================
+-- 5️⃣ Relación estudiante ↔ curso
+-- =========================================================
 CREATE TABLE IF NOT EXISTS Curso_Student (
     cursoId INT NOT NULL,
     studentId INT NOT NULL,
@@ -78,11 +100,15 @@ CREATE TABLE IF NOT EXISTS Curso_Student (
     FOREIGN KEY (studentId) REFERENCES Student(studentId) ON DELETE CASCADE
 );
 
+-- =========================================================
+-- 6️⃣ Comunicación (chat)
+-- =========================================================
 CREATE TABLE IF NOT EXISTS Chat (
     chatId INT AUTO_INCREMENT PRIMARY KEY,
     titulo VARCHAR(100),
     cursoId INT,
     createdBy INT NOT NULL,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cursoId) REFERENCES Curso(cursoId) ON DELETE CASCADE,
     FOREIGN KEY (createdBy) REFERENCES User(userId) ON DELETE CASCADE
 );
@@ -91,19 +117,23 @@ CREATE TABLE IF NOT EXISTS Message (
     messageId INT AUTO_INCREMENT PRIMARY KEY,
     chatId INT NOT NULL,
     userId INT NOT NULL,
-    content TEXT,
+    content TEXT NOT NULL,
     dateSent DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(70),
+    status ENUM('Enviado','Leído') DEFAULT 'Enviado',
     FOREIGN KEY (chatId) REFERENCES Chat(chatId) ON DELETE CASCADE,
     FOREIGN KEY (userId) REFERENCES User(userId) ON DELETE CASCADE
 );
 
+-- =========================================================
+-- 7️⃣ Reportes y calificaciones
+-- =========================================================
 CREATE TABLE IF NOT EXISTS Report (
     reportId INT AUTO_INCREMENT PRIMARY KEY,
     cursoId INT NOT NULL,
     studentId INT,
     type ENUM('General','Por estudiante') NOT NULL,
     data JSON,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cursoId) REFERENCES Curso(cursoId) ON DELETE CASCADE,
     FOREIGN KEY (studentId) REFERENCES Student(studentId) ON DELETE CASCADE
 );
@@ -118,13 +148,35 @@ CREATE TABLE IF NOT EXISTS Score (
     UNIQUE KEY unique_curso_student (cursoId, studentId)
 );
 
-INSERT INTO Title (titleName) VALUES ('Dr.');
-INSERT INTO Title (titleName) VALUES ('Mtro.');
-INSERT INTO Title (titleName) VALUES ('Lic.');
-INSERT INTO Title (titleName) VALUES ('Ing.');
-INSERT INTO Title (titleName) VALUES ('Prof.');
+-- =========================================================
+-- 8️⃣ Datos iniciales
+-- =========================================================
+INSERT INTO Title (titleName) VALUES 
+('Dr.'), ('Mtro.'), ('Lic.'), ('Ing.'), ('Prof.');
 
+INSERT INTO EducationLevel (levelName) VALUES 
+('Secundaria'), ('Preparatoria'), ('Universidad');
 
-INSERT INTO EducationLevel (levelName) VALUES ('Secundaria');
-INSERT INTO EducationLevel (levelName) VALUES ('Preparatoria');
-INSERT INTO EducationLevel (levelName) VALUES ('Universidad');
+-- =========================================================
+-- 9️⃣ Trigger opcional: crea fila en Student/Instructor automáticamente
+-- =========================================================
+DELIMITER //
+
+CREATE TRIGGER after_user_insert
+AFTER INSERT ON User
+FOR EACH ROW
+BEGIN
+  IF NEW.userType = 'Instructor' THEN
+    INSERT INTO Instructor (instructorId, titleId, biography)
+    VALUES (NEW.userId, NULL, NULL);
+  ELSEIF NEW.userType = 'Student' THEN
+    INSERT INTO Student (studentId, levelId, average)
+    VALUES (NEW.userId, 1, NULL);  -- nivel por defecto: Secundaria
+  END IF;
+END //
+
+DELIMITER ;
+
+-- =========================================================
+-- ✅ Fin del script
+-- =========================================================
