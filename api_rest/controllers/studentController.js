@@ -1,9 +1,12 @@
-// controllers/studentController.js
-const StudentDAO = require('../dao/studentDAO');
+const StudentDAO = require('../database/dao/studentDAO');
 
 /**
  * Controlador para gestión de estudiantes
  * CRUD básico: listar, consultar, actualizar, eliminar
+ * Casos de uso asociados:
+ *  - CU-08: Consultar información de estudiante
+ *  - CU-09: Actualizar nivel educativo / promedio
+ *  - CU-10: Eliminar estudiante
  */
 
 exports.getAllStudents = async (req, res) => {

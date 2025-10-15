@@ -1,10 +1,12 @@
-// controllers/instructorController.js
-const instructorDAO = require('../database/dao/instructorDAO');
-
+const InstructorDAO = require('../database/dao/instructorDAO');
 
 /**
  * Controlador para gestionar instructores
  * CRUD básico: listar, consultar, actualizar, eliminar
+ * Casos de uso asociados:
+ *  - CU-05: Consultar información de instructor
+ *  - CU-06: Actualizar perfil del instructor
+ *  - CU-07: Eliminar instructor (solo DG/Admin)
  */
 
 exports.getAllInstructors = async (req, res) => {

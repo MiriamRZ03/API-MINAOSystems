@@ -3,3 +3,4 @@ api_rest/.env
 .DS_Store
 *.log
 .vscode/
+.env

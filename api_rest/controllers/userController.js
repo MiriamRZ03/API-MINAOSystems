@@ -11,17 +11,39 @@ const UserController = {
   // CU-01 Registrar usuario
   async register(req, res) {
     try {
-      const { name, email, password, role } = req.body;
-      if (!name || !email || !password) {
+      const {
+        userName,
+        paternalSurname,
+        maternalSurname,
+        email,
+        userPassword,
+        userType
+      } = req.body;
+
+      // Validar datos requeridos
+      if (!userName || !paternalSurname || !maternalSurname || !email || !userPassword || !userType) {
         return res.status(400).json({ message: 'Datos incompletos.' });
       }
 
+      // Verificar existencia del correo
       const existing = await UserDAO.findByEmail(email);
       if (existing) {
         return res.status(409).json({ message: 'El correo ya está registrado.' });
       }
 
-      const userId = await UserDAO.createUser({ name, email, password, role });
+      // Encriptar contraseña
+      const hashedPassword = await bcrypt.hash(userPassword, 10);
+
+      // Crear usuario
+      const userId = await UserDAO.createUser({
+        userName,
+        paternalSurname,
+        maternalSurname,
+        email,
+        userPassword: hashedPassword,
+        userType
+      });
+
       res.status(201).json({ message: 'Registro exitoso.', userId });
     } catch (error) {
       console.error('❌ Error en register:', error);
@@ -29,7 +51,7 @@ const UserController = {
     }
   },
 
-  // CU-02 Validar usuario
+  // CU-02 Validar usuario (opcional si usas confirmación por correo)
   async validate(req, res) {
     try {
       const { email } = req.body;
@@ -47,16 +69,20 @@ const UserController = {
   // CU-03 Iniciar sesión
   async login(req, res) {
     try {
-      const { email, password } = req.body;
+      const { email, userPassword } = req.body;
       const user = await UserDAO.findByEmail(email);
       if (!user) return res.status(401).json({ message: 'Credenciales inválidas.' });
-      if (!user.is_validated) return res.status(403).json({ message: 'Cuenta no validada.' });
 
-      const valid = await bcrypt.compare(password, user.password);
+      const valid = await bcrypt.compare(userPassword, user.userPassword);
       if (!valid) return res.status(401).json({ message: 'Credenciales inválidas.' });
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        {
+          id: user.userId,
+          email: user.email,
+          userType: user.userType,
+          name: `${user.userName} ${user.paternalSurname}`
+        },
         JWT_SECRET,
         { expiresIn: '8h' }
       );
@@ -71,10 +97,23 @@ const UserController = {
   // Editar perfil (requiere JWT)
   async updateProfile(req, res) {
     try {
-      const userId = req.user.id; // vendrá del middleware JWT
-      const { name, password } = req.body;
-      await UserDAO.updateProfile(userId, { name, password });
-      res.json({ message: 'Perfil actualizado.' });
+      const userId = req.user.id; // viene del middleware JWT
+      const {
+        userName,
+        paternalSurname,
+        maternalSurname,
+        userPassword
+      } = req.body;
+
+      const dataToUpdate = {};
+
+      if (userName) dataToUpdate.userName = userName;
+      if (paternalSurname) dataToUpdate.paternalSurname = paternalSurname;
+      if (maternalSurname) dataToUpdate.maternalSurname = maternalSurname;
+      if (userPassword) dataToUpdate.userPassword = await bcrypt.hash(userPassword, 10);
+
+      await UserDAO.updateProfile(userId, dataToUpdate);
+      res.json({ message: 'Perfil actualizado correctamente.' });
     } catch (error) {
       console.error('❌ Error en updateProfile:', error);
       res.status(500).json({ message: 'Error del servidor.' });

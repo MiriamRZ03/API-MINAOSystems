@@ -3,30 +3,69 @@ const pool = require('../pool');
 const bcrypt = require('bcrypt');
 
 const UserDAO = {
-  async createUser({ name, email, password, role }) {
-    const hashed = await bcrypt.hash(password, 10);
+  // Crear nuevo usuario
+  async createUser({
+    userName,
+    paternalSurname,
+    maternalSurname,
+    email,
+    userPassword,
+    userType
+  }) {
+    // Ya viene encriptada desde el controlador, pero mantenemos compatibilidad
+    const hashed = userPassword || await bcrypt.hash(userPassword, 10);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_validated) VALUES (?, ?, ?, ?, 0)',
-      [name, email, hashed, role]
+      `INSERT INTO User 
+        (userName, paternalSurname, maternalSurname, email, userPassword, userType)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [userName, paternalSurname, maternalSurname, email, hashed, userType]
     );
     return result.insertId;
   },
 
+  // Buscar usuario por correo
   async findByEmail(email) {
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [rows] = await pool.query('SELECT * FROM User WHERE email = ?', [email]);
     return rows[0];
   },
 
+  // Validar usuario (opcional)
   async validateUser(email) {
-    await pool.query('UPDATE users SET is_validated = 1 WHERE email = ?', [email]);
+    // No existe campo "is_validated" en la BD MINAO
+    // Puedes dejarlo como función vacía para compatibilidad futura
+    return true;
   },
 
-  async updateProfile(id, { name, password }) {
-    const hashed = password ? await bcrypt.hash(password, 10) : null;
-    const query = hashed
-      ? 'UPDATE users SET name = ?, password = ? WHERE id = ?'
-      : 'UPDATE users SET name = ? WHERE id = ?';
-    const values = hashed ? [name, hashed, id] : [name, id];
+  // Actualizar perfil
+  async updateProfile(userId, { userName, paternalSurname, maternalSurname, userPassword }) {
+    const hashed = userPassword ? await bcrypt.hash(userPassword, 10) : null;
+
+    // Construir consulta dinámica sin eliminar campos opcionales
+    const fields = [];
+    const values = [];
+
+    if (userName) {
+      fields.push('userName = ?');
+      values.push(userName);
+    }
+    if (paternalSurname) {
+      fields.push('paternalSurname = ?');
+      values.push(paternalSurname);
+    }
+    if (maternalSurname) {
+      fields.push('maternalSurname = ?');
+      values.push(maternalSurname);
+    }
+    if (hashed) {
+      fields.push('userPassword = ?');
+      values.push(hashed);
+    }
+
+    if (fields.length === 0) return null; // nada que actualizar
+
+    const query = `UPDATE User SET ${fields.join(', ')} WHERE userId = ?`;
+    values.push(userId);
+
     const [result] = await pool.query(query, values);
     return result;
   }

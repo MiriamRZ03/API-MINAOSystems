@@ -1,16 +1,22 @@
-// api_rest/routes/userRoutes.js
+/**
+ * Rutas de usuario
+ * Casos de uso:
+ *  - CU-01 Registrar usuario
+ *  - CU-02 Validar usuario
+ *  - CU-03 Iniciar sesión
+ *  - CU-04 Editar perfil (protegido con JWT)
+ */
 const express = require('express');
+const router = express.Router();
 const UserController = require('../controllers/userController');
 const authenticateJWT = require('../middleware/authenticateJWT');
 
-const router = express.Router();
-
-// Casos de uso base
+// Registro, validación y login
 router.post('/register', UserController.register);
 router.post('/validate', UserController.validate);
 router.post('/login', UserController.login);
 
-// Ruta protegida (ejemplo de perfil)
+// Perfil protegido
 router.put('/profile', authenticateJWT, UserController.updateProfile);
 
 module.exports = router;
