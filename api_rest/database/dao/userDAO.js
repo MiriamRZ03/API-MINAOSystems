@@ -8,8 +8,8 @@ const createUser = async (user) => {
         const hashedPassword = await bcrypt.hash(user.userPassword, 10);
 
         const [userResult] = await dbConnection.execute(
-            `INSERT INTO User (userName, paternalSurname, maternalSurname, email, userPassword, userType) VALUES (?, ?, ?, ?, ?, ?)`,
-            [user.userName, user.paternalSurname, user.maternalSurname, user.email, hashedPassword, user.userType]
+            `INSERT INTO User (userName, paternalSurname, maternalSurname, email, userPassword, userType, verificationCode, isVerified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [user.userName, user.paternalSurname, user.maternalSurname, user.email, hashedPassword, user.userType, user.verificationCode, user.isVerified]
         );
 
         const userId = userResult.insertId;
@@ -90,4 +90,33 @@ const login = async (email, userPassword) => {
     return loginResult;
 };
 
-module.exports = {createUser, findUserByEmail, login};
+const findUser = async (email) => {
+    const query = 'SELECT * FROM User WHERE email = ?';
+    try {
+        const [rows] = await (await connection).execute(query, [email]);
+        if (rows.length === 0) return null;
+
+        const user = rows[0];
+        user.isVerified = Boolean(user.isVerified);
+        return user;
+    } catch (error) {
+        console.error("Find user by email error:", error);
+        throw error;
+    }
+}
+
+const updateUserVerification = (email) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      UPDATE User 
+      SET isVerified = TRUE, verificationCode = NULL
+      WHERE email = ?;
+    `;
+    connection.query(query, [email], (err, result) => {
+      if (err) return reject(err);
+      resolve(result);
+    });
+  });
+};
+
+module.exports = {createUser, findUserByEmail, login, findUser, updateUserVerification};

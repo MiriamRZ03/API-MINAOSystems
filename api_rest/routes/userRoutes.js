@@ -1,6 +1,6 @@
 const {Router} = require ('express');
 const router = Router();
-const{registerUser, userLogin}=require('../controllers/userController');
+const{registerUser, userLogin, verifyUser}=require('../controllers/userController');
 
 /**
  * @swagger
@@ -59,5 +59,35 @@ router.post('/registerUser', registerUser);
  *         description: Error interno del servidor
  */
 router.post('/login', userLogin);
+
+/**
+ * @swagger
+ * /users/verify:
+ *   post:
+ *     summary: Verificar cuenta de usuario
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Correo electrónico del usurio
+ *               verificationCode:
+ *                 type: string
+ *                 description: Código de verificación enviado al correo electrónico
+ *     responses:
+ *       200:
+ *         description: Cuenta verificada correctamente
+ *       400:
+ *         description: Datos invalidos o código incorrecto
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+router.post('/verify', verifyUser);
 
 module.exports = router;

@@ -27,4 +27,10 @@ schemas:
       userType:
         type: string
         description: Tipo de usuario 
+      verificationCode:
+        type: string
+        description: Código de verificación
+      isVerified:
+        type: boolean
+        description: true si la cuenta está verificada o false si no lo está
       

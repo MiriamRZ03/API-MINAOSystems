@@ -124,7 +124,10 @@ INSERT INTO Title (titleName) VALUES ('Lic.');
 INSERT INTO Title (titleName) VALUES ('Ing.');
 INSERT INTO Title (titleName) VALUES ('Prof.');
 
-
 INSERT INTO EducationLevel (levelName) VALUES ('Secundaria');
 INSERT INTO EducationLevel (levelName) VALUES ('Preparatoria');
 INSERT INTO EducationLevel (levelName) VALUES ('Universidad');
+
+ALTER TABLE User
+ADD COLUMN verificationCode VARCHAR(10),
+ADD COLUMN isVerified BOOLEAN DEFAULT FALSE;

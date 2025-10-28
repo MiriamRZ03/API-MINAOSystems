@@ -2,7 +2,9 @@ const { request, response } = require("express");
 const { generateJWT } = require('../utils/createJWT');
 const HttpStatusCodes = require('../utils/enums');
 const e = require ("express");
-const { createUser, findUserByEmail, login } = require("../database/dao/userDAO");
+const path = require('path');
+const {sendEmail, loadTemplate, generateVerificationCode} = require("../utils/sendEmail");
+const { createUser, findUserByEmail, login,findUser, updateUserVerification} = require("../database/dao/userDAO");
 
 const resetTokens = {};
 
@@ -16,7 +18,7 @@ const registerUser = async (req, res = response) => {
             details: nameValidation.message
         });
     }
-     const loginValidation = validateLoginInput({ email, userPassword });
+     const loginValidation = validateLoginInput( email, userPassword );
     if (!loginValidation.valid) {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
@@ -43,11 +45,22 @@ const registerUser = async (req, res = response) => {
             });
         }
 
+        const verificationCode = generateVerificationCode();
+
         const newUser = {
-            userName, paternalSurname, maternalSurname, email, userPassword, userType
+            userName, paternalSurname, maternalSurname, email, userPassword, userType, verificationCode,
+            isVerified: false
         };
 
         const result = await createUser(newUser);
+        const templatePath = path.join(__dirname, '../templates/verification_email.html');
+        const htmlContent = loadTemplate(templatePath, {
+            name: userName,
+            code: verificationCode
+        });
+
+        await sendEmail(email, 'Verify your account', htmlContent);
+
         return res.status(HttpStatusCodes.CREATED).json({
             message: "The user has registered successfully",
             email: result.email
@@ -129,4 +142,52 @@ const userLogin = async (req, res = response) => {
     }
 }
 
-module.exports = {registerUser, userLogin};
+const verifyUser = async (req, res = response) => {
+    console.log('verifyUser body:', req.body);
+    const { email, verificationCode } = req.body;
+
+    if (!email || !verificationCode) {
+        return res.status(400).json({
+            error: true,
+            message: "Email and verification code are required"
+        });
+    }
+
+    try {
+        const user = await findUser(email);
+        if (!user) {
+            return res.status(404).json({
+                error: true,
+                message: "User not found"
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                error: true,
+                message: "Account is already verified"
+            });
+        }
+
+        if (user.verificationCode !== verificationCode) {
+            return res.status(400).json({
+                error: true,
+                message: "Invalid verification code"
+            });
+        }
+
+        await updateUserVerification(email);
+
+        return res.status(200).json({
+            message: "Account verified successfully"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: true,
+            message: "Error verifying account"
+        });
+    }
+};
+
+module.exports = {registerUser, userLogin, verifyUser};
