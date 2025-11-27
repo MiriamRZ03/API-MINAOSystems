@@ -1,5 +1,5 @@
 {
-  "name": "api_rest",
+  "name": "user_service",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",

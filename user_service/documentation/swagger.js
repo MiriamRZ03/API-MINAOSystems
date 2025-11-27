@@ -15,7 +15,7 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:' + process.env.SERVER_PORT + '/minao_api',
+                url: 'http://localhost:' + process.env.SERVER_PORT + '/minao_systems',
                 description: 'Local host environment',
             },
         ],

@@ -39,4 +39,35 @@ const createCurso = async(req, res = response) => {
     }
 }
 
-module.exports = {createCurso};
+const setCourseState = async (req, res = response) => {
+    const { cursoId, state } = req.body;
+    if (!cursoId || !state) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            statusCode: HttpStatusCodes.BAD_REQUEST,
+            details: "Course ID and state are required"
+        });
+    }
+    try {
+        const result = await updateCourseState(cursoId, state);
+
+        if (result.affectedRows === 0) {
+            return res.status(HttpStatusCodes.NOT_FOUND).json({
+                error: true,
+                statusCode: HttpStatusCodes.NOT_FOUND,
+                details: "Course not found"
+            });
+        }
+        return res.status(HttpStatusCodes.OK).json({
+            message: `Course state updated to ${state}`
+        });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Server error. Could not update course state"
+        });
+    }
+};
+
+module.exports = {createCurso, setCourseState};
