@@ -22,6 +22,48 @@ const createCourse = async (course) => {
     }
 }
 
+const updateCourseDetails = async (cursoId, details) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const { name, description, category, endDate } = details;
+        const fields = [];
+        const values = [];
+
+        if (name) {
+            fields.push("name = ?");
+            values.push(name);
+        }
+        if (description) {
+            fields.push("description = ?");
+            values.push(description);
+        }
+        if (category) {
+            fields.push("category = ?");
+            values.push(category);
+        }
+        if (endDate) {
+            fields.push("endDate = ?");
+            values.push(endDate);
+        }
+
+        if (fields.length === 0) {
+            throw new Error("No fields to update");
+        }
+
+        values.push(cursoId); 
+
+        const query = `UPDATE Curso SET ${fields.join(", ")} WHERE cursoId = ?`;
+        const [result] = await dbConnection.execute(query, values);
+        return result;
+
+    } catch (error) {
+        console.error("Error updating course details:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
 const updateCourseState = async (cursoId, newState) => {
     const dbConnection = await connection.getConnection();
     try {
@@ -46,4 +88,4 @@ const updateCourseState = async (cursoId, newState) => {
     }
 };
 
-module.exports = {createCourse, updateCourseState}
+module.exports = {createCourse, updateCourseDetails, updateCourseState}

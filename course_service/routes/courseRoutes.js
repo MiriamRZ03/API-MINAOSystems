@@ -1,6 +1,6 @@
 const {Router} = require ('express');
 const router = Router();
-const{createCurso, setCourseState} = require('../controller/courseController');
+const{createCurso, setCourseState, updateCourse} = require('../controller/courseController');
 
 /**
  * @swagger
@@ -30,6 +30,49 @@ const{createCurso, setCourseState} = require('../controller/courseController');
  *         description: Error del servidor
  */
 router.post('/createCourse', createCurso);
+
+/**
+ * @swagger
+ * /courses/updateCourse:
+ *   patch:
+ *     summary: Update course details (name, description, category, endDate)
+ *     tags: [Courses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cursoId
+ *             properties:
+ *               cursoId:
+ *                 type: integer
+ *                 description: ID of the course
+ *               name:
+ *                 type: string
+ *                 description: New course name
+ *               description:
+ *                 type: string
+ *                 description: New course description
+ *               category:
+ *                 type: string
+ *                 description: New course category
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *                 description: New end date
+ *     responses:
+ *       200:
+ *         description: Course updated successfully
+ *       400:
+ *         description: Missing required fields
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/updateCourse', updateCourse);
 
 /**
  * @swagger
