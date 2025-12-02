@@ -204,8 +204,25 @@ const getCoursesByName = async (name) => {
     }
 };
 
+const getCoursesByCategory = async (category) => {
+    const dbConnection = await connection.getConnection();
 
+    try {
+        const [courses] = await dbConnection.execute(
+            `SELECT * FROM Curso WHERE category = ?`,
+            [category]
+        );
+
+        return courses;
+
+    } catch (error) {
+        console.error("Error fetching courses by category:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
 
 module.exports = {createCourse, updateCourseDetails, updateCourseState, 
     getCourseById, getAllCoursesByInstructor, joinCourse, getCoursesByStudent,
-    getCoursesByName};
+    getCoursesByName, getCoursesByCategory};

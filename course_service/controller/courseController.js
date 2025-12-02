@@ -237,8 +237,28 @@ const getCoursesByNameController = async (req, res = response) => {
     }
 };
 
+const getCoursesByCategoryController = async (req, res = response) => {
+    const { category } = req.query;
 
+    if (!category) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            details: "Missing 'category' query parameter"
+        });
+    }
+
+    try {
+        const courses = await getCoursesByCategory(category);
+
+        return res.status(HttpStatusCodes.OK).json({ courses });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            details: "Error fetching courses by category"
+        });
+    }
+};
 
 module.exports = {createCurso, updateCourse, setCourseState, getCourseDetailById, 
     getCoursesByInstructor, joinCurso, getCoursesByStudentController,
-    getCoursesByNameController};
+    getCoursesByNameController, getCoursesByCategoryController};
