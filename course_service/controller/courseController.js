@@ -28,7 +28,8 @@ const createCurso = async(req, res = response) => {
         });
         return res.status(HttpStatusCodes.CREATED).json({
             message: "The course has registered successfully",
-            cursoId: result.cursoId
+            cursoId: result.cursoId,
+            joinCode: result.joinCode
         });
 
     }catch (error){

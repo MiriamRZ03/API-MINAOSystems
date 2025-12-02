@@ -2,18 +2,19 @@ const connection = require("../pool");
 
 const createCourse = async (course) => {
     const dbConnection = await connection.getConnection();
+    const joinCode = generateJoinCode();
     try{
         await dbConnection.beginTransaction();
         const [courseResult] = await dbConnection.execute(
-            `INSERT INTO Curso (name, description, category, startDate, endDate, state, instructorUserId) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [course.name, course.description, course.category, course.startDate, course.endDate, course.state, course.instructorUserId]
+            `INSERT INTO Curso (name, description, category, startDate, endDate, state, instructorUserId, joinCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [course.name, course.description, course.category, course.startDate, course.endDate, course.state, course.instructorUserId, joinCode]
         );
 
         const cursoId = courseResult.insertId;
 
         await dbConnection.commit();
 
-        return { success: true, cursoId };
+         return { success: true, cursoId, joinCode };
 
     }catch(error){
         await dbConnection.rollback();
@@ -23,6 +24,15 @@ const createCourse = async (course) => {
         dbConnection.release();
     }
 }
+
+const generateJoinCode = (length = 7) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+};
 
 const updateCourseDetails = async (cursoId, details) => {
     const dbConnection = await connection.getConnection();
@@ -123,5 +133,6 @@ const getAllCoursesByInstructor = async (instructorUserId) => {
         dbConnection.release();
     }
 };
+
 
 module.exports = {createCourse, updateCourseDetails, updateCourseState, getCourseById, getAllCoursesByInstructor}
