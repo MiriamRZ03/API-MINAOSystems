@@ -12,7 +12,7 @@ const {uploadContentFile, getFilesByContentController, deleteFileController} = r
 
 /**
  * @swagger
- * /content/{contentId}/upload:
+ * /content-file/{contentId}/upload:
  *   post:
  *     summary: Subir un archivo asociado a un contenido
  *     description: Permite subir un archivo (documento, imagen, video, PDF, etc.) y asociarlo a un contenido existente.
@@ -59,11 +59,11 @@ const {uploadContentFile, getFilesByContentController, deleteFileController} = r
  *       500:
  *         description: Error en el servidor al subir archivo
  */
-router.post("/:contentId/upload", multer.single("file"),uploadContentFile);
+router.post("/:contentId/upload", upload.single("file"),uploadContentFile);
 
 /**
  * @swagger
- * /content/{contentId}/files:
+ * /content-file/{contentId}/files:
  *   get:
  *     summary: Obtener todos los archivos asociados a un contenido
  *     tags: [ContentFiles]
@@ -98,7 +98,7 @@ router.get("/:contentId/files", getFilesByContentController);
 
 /**
  * @swagger
- * /file/{fileId}:
+ * /content-file/{fileId}:
  *   delete:
  *     summary: Eliminar un archivo por su ID
  *     tags: [ContentFiles]
