@@ -3,7 +3,7 @@ const connection = require("../pool");
 
 const createUser = async (user) => {
     const dbConnection = await connection.getConnection();
-    try{
+    try {
         await dbConnection.beginTransaction();
         const hashedPassword = await bcrypt.hash(user.userPassword, 10);
 
@@ -22,7 +22,6 @@ const createUser = async (user) => {
             'Prof.': 5
         };
 
-
         if (user.userType === 'Student') {
             await dbConnection.execute(
                 `INSERT INTO Student (studentId, levelId, average) VALUES (?, ?, ?)`,
@@ -40,7 +39,7 @@ const createUser = async (user) => {
 
         return { success: true, userId };
 
-    }catch(error){
+    } catch (error) {
         await dbConnection.rollback();
         console.error("User creating error:", error);
         throw error;
@@ -50,8 +49,8 @@ const createUser = async (user) => {
 const findUserByEmail = async (email) => {
     const query = 'SELECT email FROM User WHERE email = ?';
     let idResult = null;
-       try {
-        const [rows] = await (await connection).execute(query, [email]);
+    try {
+        const [rows] = await connection.execute(query, [email]);
 
         if (rows.length > 0) {
             idResult = rows[0].email;
@@ -71,13 +70,13 @@ const login = async (email, userPassword) => {
         SELECT userId, userName, paternalSurname, maternalSurname, email, userPassword, userType
         FROM User
         WHERE email = ? 
-        `;
+    `;
     let loginResult = null;
 
-    try{
-        const [rows] = await (await dbConnection).execute(query, [email]);
+    try {
+        const [rows] = await dbConnection.execute(query, [email]);
 
-        if(rows.length > 0){
+        if (rows.length > 0) {
             const user = rows[0];
             const isPasswordValid = await bcrypt.compare(userPassword, user.userPassword);
 
@@ -86,7 +85,7 @@ const login = async (email, userPassword) => {
             }
 
             loginResult = {
-                userId: user.userId, 
+                userId: user.userId,
                 email: user.email,
                 role: user.userType,
                 name: user.userName,
@@ -94,79 +93,11 @@ const login = async (email, userPassword) => {
                 maternalSurname: user.maternalSurname
             };
         } 
-    }catch(error){
+    } catch (error) {
         console.error("Login error:", error);
         throw error;
     }
     return loginResult;
 };
 
-const findUser = async (email) => {
-    const query = 'SELECT * FROM User WHERE email = ?';
-    try {
-        const [rows] = await (await connection).execute(query, [email]);
-        if (rows.length === 0) return null;
-
-        const user = rows[0];
-        user.isVerified = Boolean(user.isVerified);
-        return user;
-    } catch (error) {
-        console.error("Find user by email error:", error);
-        throw error;
-    }
-}
-
-const updateUserVerification = (email) => {
-  return new Promise((resolve, reject) => {
-    const query = `
-      UPDATE User 
-      SET isVerified = TRUE, verificationCode = NULL
-      WHERE email = ?;
-    `;
-    connection.query(query, [email], (err, result) => {
-      if (err) return reject(err);
-      resolve(result);
-    });
-  });
-};
-
-const updateUserProfile = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
-    const dbConnection = await connection.getConnection();
-    try {
-        const [result] = await dbConnection.execute(
-            `UPDATE User 
-             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
-             WHERE userId = ?`,
-            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
-        );
-
-        return result;
-    } catch (error) {
-        console.error("Update user profile error:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-const updateUserProfileBasic = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
-    const dbConnection = await connection.getConnection();
-    try {
-        const [result] = await dbConnection.execute(
-            `UPDATE User 
-             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
-             WHERE userId = ?`,
-            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
-        );
-
-        return result;
-    } catch (error) {
-        console.error("Update user profile error:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-
-module.exports = {createUser, findUserByEmail, login, findUser, updateUserVerification, updateUserProfile, updateUserProfileBasic};
+module.exports = { createUser, findUserByEmail, login };

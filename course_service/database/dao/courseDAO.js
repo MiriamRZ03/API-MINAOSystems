@@ -3,7 +3,7 @@ const connection = require("../pool");
 const createCourse = async (course) => {
     const dbConnection = await connection.getConnection();
     const joinCode = generateJoinCode();
-    try{
+    try {
         await dbConnection.beginTransaction();
         const [courseResult] = await dbConnection.execute(
             `INSERT INTO Curso (name, description, category, startDate, endDate, state, instructorUserId, joinCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -11,19 +11,18 @@ const createCourse = async (course) => {
         );
 
         const cursoId = courseResult.insertId;
-
         await dbConnection.commit();
 
-         return { success: true, cursoId, joinCode };
+        return { success: true, cursoId, joinCode };
 
-    }catch(error){
+    } catch (error) {
         await dbConnection.rollback();
         console.error("Course creating error:", error);
         throw error;
-    }finally{
+    } finally {
         dbConnection.release();
     }
-}
+};
 
 const generateJoinCode = (length = 7) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -62,7 +61,7 @@ const updateCourseDetails = async (cursoId, details) => {
             throw new Error("No fields to update");
         }
 
-        values.push(cursoId); 
+        values.push(cursoId);
 
         const query = `UPDATE Curso SET ${fields.join(", ")} WHERE cursoId = ?`;
         const [result] = await dbConnection.execute(query, values);
@@ -102,34 +101,34 @@ const updateCourseState = async (cursoId, newState) => {
 
 const getCourseById = async (cursoId) => {
     const dbConnection = await connection.getConnection();
-    try{
+    try {
         const [rows] = await dbConnection.execute(
             `SELECT name, description, category, startDate, endDate, state FROM Curso WHERE cursoId = ?`,
             [cursoId]
         );
 
         return rows;
-    }catch(error){
+    } catch (error) {
         console.error("Error fetching course by ID:", error);
         throw error;
-    }finally{
+    } finally {
         dbConnection.release();
     }
 };
 
 const getAllCoursesByInstructor = async (instructorUserId) => {
-    const dbConnection = await connection.getConnection();  
-    try{
+    const dbConnection = await connection.getConnection();
+    try {
         const [rows] = await dbConnection.execute(
             `SELECT name, description, category, startDate, endDate, state FROM Curso WHERE instructorUserId = ? AND state = 'Inactivo' `,
             [instructorUserId]
         );
 
         return rows;
-    }catch(error){
+    } catch (error) {
         console.error("Error fetching instructor courses:", error);
         throw error;
-    }finally{
+    } finally {
         dbConnection.release();
     }
 };
@@ -165,102 +164,30 @@ const joinCourse = async (studentUserId, joinCode) => {
     }
 };
 
-const getCoursesByStudent = async (studentUserId) => {
+const removeStudentFromCourse = async (cursoId, studentUserId) => {
     const dbConnection = await connection.getConnection();
     try {
-        const [courses] = await dbConnection.execute(
-            `SELECT curso.cursoId, curso.name, curso.description, curso.category, curso.startDate, curso.endDate, curso.state, curso.instructorUserId
-             FROM Curso curso INNER JOIN Curso_Student curso_student ON curso.cursoId = curso_student.cursoId
-             WHERE curso_student.studentUserId = ?`,
-            [studentUserId]
+        const [result] = await dbConnection.execute(
+            `DELETE FROM Curso_Student
+             WHERE cursoId = ? AND studentUserId = ?`,
+            [cursoId, studentUserId]
         );
 
-        return courses;
-
+        return result;
     } catch (error) {
-        console.error("Error fetching courses for student:", error);
+        console.error("Error removing student from course:", error);
         throw error;
     } finally {
         dbConnection.release();
     }
 };
 
-const getCoursesByName = async (name) => {
-    const dbConnection = await connection.getConnection();
-
-    try {
-        const [courses] = await dbConnection.execute(
-            `SELECT * FROM Curso WHERE name LIKE ?`,
-            [`%${name}%`]
-        );
-
-        return courses;
-
-    } catch (error) {
-        console.error("Error fetching courses by name:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
+module.exports = {
+    createCourse,
+    updateCourseDetails,
+    updateCourseState,
+    getCourseById,
+    getAllCoursesByInstructor,
+    joinCourse,
+    removeStudentFromCourse
 };
-
-const getCoursesByCategory = async (category) => {
-    const dbConnection = await connection.getConnection();
-
-    try {
-        const [courses] = await dbConnection.execute(
-            `SELECT * FROM Curso WHERE category = ?`,
-            [category]
-        );
-
-        return courses;
-
-    } catch (error) {
-        console.error("Error fetching courses by category:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-const getCoursesByMonth = async (year, month) => {
-    const dbConnection = await connection.getConnection();
-
-    try {
-        const [courses] = await dbConnection.execute(
-            `SELECT * FROM Curso 
-             WHERE YEAR(startDate) = ? AND MONTH(startDate) = ?`,
-            [year, month]
-        );
-
-        return courses;
-
-    } catch (error) {
-        console.error("Error fetching courses by month:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-const getCoursesByState = async (state) => {
-    const dbConnection = await connection.getConnection();
-
-    try {
-        const [courses] = await dbConnection.execute(
-            `SELECT * FROM Curso WHERE state = ?`,
-            [state]
-        );
-
-        return courses;
-
-    } catch (error) {
-        console.error("Error fetching courses by state:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-module.exports = {createCourse, updateCourseDetails, updateCourseState, 
-    getCourseById, getAllCoursesByInstructor, joinCourse, getCoursesByStudent,
-    getCoursesByName, getCoursesByCategory, getCoursesByMonth, getCoursesByState};

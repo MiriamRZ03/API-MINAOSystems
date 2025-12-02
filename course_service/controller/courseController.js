@@ -1,25 +1,24 @@
 const { request, response } = require("express");
-const e = require ("express");
 const path = require('path');
+const { createCourse, updateCourseState, updateCourseDetails, getAllCoursesByInstructor, getCourseById, removeStudentFromCourse } = require("../database/dao/courseDAO");
 const HttpStatusCodes = require('../utils/enums');
-const { count } = require("console");
-const {createCourse, updateCourseState, updateCourseDetails, 
+const { createCourse, updateCourseState, updateCourseDetails, 
     getAllCoursesByInstructor, getCourseById, joinCourse, 
     getCoursesByStudent, getCoursesByName, getCoursesByCategory, 
-    getCoursesByMonth, getCoursesByState} = require("../database/dao/courseDAO");
+    getCoursesByMonth, getCoursesByState } = require("../database/dao/courseDAO");
 
 const createCurso = async(req, res = response) => {
-    const {name, description, category, startDate, endDate, state, instructorUserId}= req.body;
+    const { name, description, category, startDate, endDate, state, instructorUserId } = req.body;
 
-      if (!name || !category || !startDate || !endDate || !state || !instructorUserId) {
-            return res.status(HttpStatusCodes.BAD_REQUEST).json({
+    if (!name || !category || !startDate || !endDate || !state || !instructorUserId) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
             statusCode: HttpStatusCodes.BAD_REQUEST,
             details: "Missing required fields. Please check your input."
         });
     }
 
-    try{
+    try {
         const result = await createCourse({
             name,
             description,
@@ -30,19 +29,19 @@ const createCurso = async(req, res = response) => {
             instructorUserId
         });
         return res.status(HttpStatusCodes.CREATED).json({
-            message: "The course has registered successfully",
+            message: "The course has been registered successfully",
             cursoId: result.cursoId,
             joinCode: result.joinCode
         });
 
-    }catch (error){
+    } catch (error) {
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
             details: "Error creating new course. Try again later"
         });
     }
-}
+};
 
 const updateCourse = async (req, res = response) => {
     const { cursoId, name, description, category, endDate } = req.body;
@@ -67,7 +66,7 @@ const updateCourse = async (req, res = response) => {
         }
 
         return res.status(HttpStatusCodes.OK).json({
-            statusCode:HttpStatusCodes.OK,
+            statusCode: HttpStatusCodes.OK,
             message: "Course updated successfully"
         });
 
@@ -111,38 +110,38 @@ const setCourseState = async (req, res = response) => {
     }
 };
 
-const getCourseDetailById = async (req, res = response) =>{
-    const {courseId} = req.params;
+const getCourseDetailById = async (req, res = response) => {
+    const { courseId } = req.params;
 
-    try{
-        const result = await getCourseById (courseId);
-
-        return res.status(HttpStatusCodes.OK).json({
-            count: result.length,
-            message:"Query executed successfully",
-            result
-        });
-    }catch(error){
-        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: true, 
-            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Server error. Could not fetch courses"
-        });
-    }
-};
-
-const getCoursesByInstructor = async (req, res = response) => {
-    const {instructorId} = req.params;
-
-    try{
-        const result = await getAllCoursesByInstructor (instructorId);
+    try {
+        const result = await getCourseById(courseId);
 
         return res.status(HttpStatusCodes.OK).json({
             count: result.length,
             message: "Query executed successfully",
             result
         });
-    }catch(error){
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true, 
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Server error. Could not fetch course"
+        });
+    }
+};
+
+const getCoursesByInstructor = async (req, res = response) => {
+    const { instructorId } = req.params;
+
+    try {
+        const result = await getAllCoursesByInstructor(instructorId);
+
+        return res.status(HttpStatusCodes.OK).json({
+            count: result.length,
+            message: "Query executed successfully",
+            result
+        });
+    } catch (error) {
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR, 
@@ -183,38 +182,44 @@ const joinCurso = async (req, res = response) => {
     }
 };
 
-const getCoursesByStudentController = async (req, res = response) => {
-    const { studentId } = req.params;
+// Unenroll student from course
+const unenrollStudentFromCourse = async (req, res = response) => {
+    const { courseId, studentId } = req.params;
 
-    if (!studentId) {
+    if (!courseId || !studentId) {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
-            details: "Missing studentId"
+            statusCode: HttpStatusCodes.BAD_REQUEST,
+            details: "Course and student are required"
         });
     }
 
     try {
-        const courses = await getCoursesByStudent(studentId);
+        const result = await removeStudentFromCourse(courseId, studentId);
 
-        if (courses.length === 0) {
+        if (result.affectedRows === 0) {
             return res.status(HttpStatusCodes.NOT_FOUND).json({
                 error: true,
-                details: "No courses found for this student"
+                statusCode: HttpStatusCodes.NOT_FOUND,
+                details: "Enrollment not found for this course and student"
             });
         }
 
         return res.status(HttpStatusCodes.OK).json({
-            courses
+            statusCode: HttpStatusCodes.OK,
+            message: "Student removed from course successfully"
         });
-
     } catch (error) {
+        console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
-            details: "Error fetching courses. Try again later"
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Server error. Could not remove student from course"
         });
     }
 };
 
+// Search courses by name
 const getCoursesByNameController = async (req, res = response) => {
     const { name } = req.query;
 
@@ -237,6 +242,7 @@ const getCoursesByNameController = async (req, res = response) => {
     }
 };
 
+// Search courses by category
 const getCoursesByCategoryController = async (req, res = response) => {
     const { category } = req.query;
 
@@ -259,51 +265,56 @@ const getCoursesByCategoryController = async (req, res = response) => {
     }
 };
 
-const getCoursesByMonthController = async (req, res = response) => {
-    const { year, month } = req.query;
+// Deactivate course
+const deactivateCourse = async (req, res = response) => {
+    const { id } = req.params;
 
-    if (!year || !month) {
+    if (!id) {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
-            details: "Missing 'year' or 'month' query parameter"
+            statusCode: HttpStatusCodes.BAD_REQUEST,
+            details: "Course ID is required"
         });
     }
 
     try {
-        const courses = await getCoursesByMonth(parseInt(year), parseInt(month));
+        const result = await updateCourseState(id, "Inactivo");
 
-        return res.status(HttpStatusCodes.OK).json({ courses });
+        if (result.affectedRows === 0) {
+            return res.status(HttpStatusCodes.NOT_FOUND).json({
+                error: true,
+                statusCode: HttpStatusCodes.NOT_FOUND,
+                details: "Course not found"
+            });
+        }
+
+        return res.status(HttpStatusCodes.OK).json({
+            statusCode: HttpStatusCodes.OK,
+            message: "Course deactivated successfully"
+        });
     } catch (error) {
+        console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
-            details: "Error fetching courses by month"
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Server error. Could not deactivate course"
         });
     }
 };
 
-const getCoursesByStateController = async (req, res = response) => {
-    const { state } = req.query;
-
-    if (!state || !["Activo","Inactivo"].includes(state)) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({
-            error: true,
-            details: "Missing or invalid 'state' query parameter"
-        });
-    }
-
-    try {
-        const courses = await getCoursesByState(state);
-
-        return res.status(HttpStatusCodes.OK).json({ courses });
-    } catch (error) {
-        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: true,
-            details: "Error fetching courses by state"
-        });
-    }
+module.exports = { 
+    createCurso, 
+    updateCourse, 
+    setCourseState, 
+    getCourseDetailById, 
+    getCoursesByInstructor, 
+    joinCurso, 
+    getCoursesByStudentController, 
+    getCoursesByNameController, 
+    getCoursesByCategoryController, 
+    getCoursesByMonthController, 
+    getCoursesByStateController, 
+    deleteStudentFromCourse, 
+    deactivateCourse, 
+    unenrollStudentFromCourse 
 };
-
-module.exports = {createCurso, updateCourse, setCourseState, getCourseDetailById, 
-    getCoursesByInstructor, joinCurso, getCoursesByStudentController,
-    getCoursesByNameController, getCoursesByCategoryController, getCoursesByMonthController, 
-    getCoursesByStateController};

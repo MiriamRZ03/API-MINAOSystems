@@ -2,6 +2,7 @@ const {Router} = require ('express');
 const router = Router();
 const{registerUser, userLogin, verifyUser}=require('../controllers/userController');
 const uploadProfileImage = require("../middleware/uploadProfileImage");
+const { verifyToken } = require('../middlewares/authMiddleware');
 const { updateUserBasicProfileController } = require("../controllers/profileController");
 
 
@@ -159,7 +160,24 @@ router.put('/:id', uploadProfileImage, updateUserBasicProfile);
  *       200:
  *         description: Perfil actualizado correctamente
  */
-router.put('/:id', uploadProfileImage, updateUserProfileController);
+router.put(
+  '/:id',
+  verifyToken,          
+  uploadProfileImage,     
+  (req, res, next) => {
+      // Revisa que el usuario  sea el dueño del perfil
+      const { id } = req.params;
+      if (parseInt(id, 10) !== req.user.userId) {
+          return res.status(403).json({
+              error: true,
+              statusCode: 403,
+              details: "You can only edit your own profile"
+          });
+      }
+      next();
+  },
+  updateUserProfileController
+);
 
 
 module.exports = router;

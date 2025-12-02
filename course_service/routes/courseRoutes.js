@@ -1,9 +1,25 @@
-const {Router} = require ('express');
+const { Router } = require('express');
 const router = Router();
-const{createCurso, setCourseState, updateCourse, getCourseDetailById, 
-    getCoursesByInstructor, joinCurso, getCoursesByStudentController,
-    getCoursesByNameController, getCoursesByCategoryController, getCoursesByMonthController,
-    getCoursesByStateController} = require('../controller/courseController');
+
+const {
+    createCurso,
+    setCourseState,
+    updateCourse,
+    getCourseDetailById,
+    getCoursesByInstructor,
+    joinCurso,
+    getCoursesByStudentController,
+    getCoursesByNameController,
+    getCoursesByCategoryController,
+    getCoursesByMonthController,
+    getCoursesByStateController,
+    deactivateCourse,
+    unenrollStudentFromCourse,
+    deleteStudentFromCourse
+} = require('../controller/courseController');
+
+const { verifyToken, requireInstructor, requireStudent } = require('../middleware/authMiddleware');
+
 
 /**
  * @swagger
@@ -409,5 +425,81 @@ router.get('/search/by-month', getCoursesByMonthController);
  *         description: Server error
  */
 router.get('/search/by-state', getCoursesByStateController);
+
+/**
+ * @swagger
+ * /courses/{courseId}/students/{studentId}:
+ *   delete:
+ *     summary: Remove a student from a course
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student removed from course successfully
+ *       404:
+ *         description: Enrollment not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:courseId/students/:studentId/remove', deleteStudentFromCourse);
+
+/**
+ * @swagger
+ * /courses/{id}/deactivate:
+ *   put:
+ *     summary: Deactivate a course (state = "Inactivo")
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Course deactivated successfully
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/:id/deactivate', deactivateCourse);
+
+/**
+ * @swagger
+ * /courses/{courseId}/students/{studentId}:
+ *   delete:
+ *     summary: Unenroll a student from a course (student cancels enrollment)
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: courseId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student unenrolled from course successfully
+ *       404:
+ *         description: Enrollment not found
+ *       500:
+ *         description: Server error
+ */
+router.delete('/:courseId/students/:studentId/unenroll', unenrollStudentFromCourse);
 
 module.exports = router;
