@@ -1,6 +1,7 @@
 const {Router} = require ('express');
 const router = Router();
-const{createCurso, setCourseState, updateCourse, getCourseDetailById, getCoursesByInstructor, joinCurso} = require('../controller/courseController');
+const{createCurso, setCourseState, updateCourse, getCourseDetailById, 
+    getCoursesByInstructor, joinCurso, getCoursesByStudentController} = require('../controller/courseController');
 
 /**
  * @swagger
@@ -214,5 +215,58 @@ router.get('/instructor/:instructorId', getCoursesByInstructor);
  *                   example: Error joining the course. Try again later
  */
 router.post('/join', joinCurso);
+
+/**
+ * @swagger
+ * /courses/student/{studentId}:
+ *   get:
+ *     summary: Get all courses a student is enrolled in
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the student
+ *     responses:
+ *       200:
+ *         description: Courses fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 courses:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       cursoId:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       category:
+ *                         type: string
+ *                       startDate:
+ *                         type: string
+ *                         format: date
+ *                       endDate:
+ *                         type: string
+ *                         format: date
+ *                       state:
+ *                         type: string
+ *                       instructorUserId:
+ *                         type: integer
+ *                       joinCode:
+ *                         type: string
+ *       404:
+ *         description: No courses found for this student
+ *       500:
+ *         description: Server error
+ */
+router.get('/student/:studentId', getCoursesByStudentController);
 
 module.exports = router;

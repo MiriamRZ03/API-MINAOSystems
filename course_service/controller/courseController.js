@@ -1,7 +1,9 @@
 const { request, response } = require("express");
 const e = require ("express");
 const path = require('path');
-const {createCourse, updateCourseState, updateCourseDetails, getAllCoursesByInstructor, getCourseById, joinCourse} = require("../database/dao/courseDAO");
+const {createCourse, updateCourseState, updateCourseDetails, 
+    getAllCoursesByInstructor, getCourseById, joinCourse, 
+    getCoursesByStudent} = require("../database/dao/courseDAO");
 const HttpStatusCodes = require('../utils/enums');
 const { count } = require("console");
 
@@ -179,4 +181,37 @@ const joinCurso = async (req, res = response) => {
         });
     }
 };
-module.exports = {createCurso, updateCourse, setCourseState, getCourseDetailById, getCoursesByInstructor, joinCurso};
+
+const getCoursesByStudentController = async (req, res = response) => {
+    const { studentId } = req.params;
+
+    if (!studentId) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            details: "Missing studentId"
+        });
+    }
+
+    try {
+        const courses = await getCoursesByStudent(studentId);
+
+        if (courses.length === 0) {
+            return res.status(HttpStatusCodes.NOT_FOUND).json({
+                error: true,
+                details: "No courses found for this student"
+            });
+        }
+
+        return res.status(HttpStatusCodes.OK).json({
+            courses
+        });
+
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            details: "Error fetching courses. Try again later"
+        });
+    }
+};
+module.exports = {createCurso, updateCourse, setCourseState, getCourseDetailById, 
+    getCoursesByInstructor, joinCurso, getCoursesByStudentController};

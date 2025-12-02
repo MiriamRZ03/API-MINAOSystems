@@ -165,5 +165,24 @@ const joinCourse = async (studentUserId, joinCode) => {
     }
 };
 
+const getCoursesByStudent = async (studentUserId) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [courses] = await dbConnection.execute(
+            `SELECT curso.cursoId, curso.name, curso.description, curso.category, curso.startDate, curso.endDate, curso.state, curso.instructorUserId
+             FROM Curso curso INNER JOIN Curso_Student curso_student ON curso.cursoId = curso_student.cursoId
+             WHERE curso_student.studentUserId = ?`,
+            [studentUserId]
+        );
 
-module.exports = {createCourse, updateCourseDetails, updateCourseState, getCourseById, getAllCoursesByInstructor, joinCourse}
+        return courses;
+
+    } catch (error) {
+        console.error("Error fetching courses for student:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+module.exports = {createCourse, updateCourseDetails, updateCourseState, 
+    getCourseById, getAllCoursesByInstructor, joinCourse, getCoursesByStudent};
