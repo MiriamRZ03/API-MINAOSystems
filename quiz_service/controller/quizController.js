@@ -10,7 +10,7 @@ const deleteQuizController = async (req, res = response) => {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
             statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "quizId is required"
+            details: "El id es requerido"
         });
     }
 
@@ -20,18 +20,18 @@ const deleteQuizController = async (req, res = response) => {
             return res.status(HttpStatusCodes.NOT_FOUND).json({
                 error: true,
                 statusCode: HttpStatusCodes.NOT_FOUND,
-                details: "Quiz not found"
+                details: "No encontramos el cuestionario"
             });
         }
         return res.status(HttpStatusCodes.OK).json({
-            message: "Quiz deleted successfully"
+            message: "Se eliminó el cuestionario"
         });
     } catch (error) {
         console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Error deleting quiz"
+            details: "Error al eliminar"
         });
     }
 };
@@ -45,21 +45,21 @@ const submitQuizController = async (req, res = response) => {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
             statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "quizId, studentUserId, and answers are required"
+            details: "Se requieren las respuestas"
         });
     }
 
     try {
         const result = await submitQuizAnswers(quizId, studentUserId, answers);
         return res.status(HttpStatusCodes.CREATED).json({
-            message: "Quiz answers submitted successfully"
+            message: "Las respuestas fueron enviadas"
         });
     } catch (error) {
         console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Error submitting quiz answers"
+            details: "Error al enviar las respuestas"
         });
     }
 };
@@ -73,7 +73,7 @@ const getQuizScoreController = async (req, res = response) => {
         return res.status(HttpStatusCodes.BAD_REQUEST).json({
             error: true,
             statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "quizId and studentUserId are required"
+            details: "Error al obtener la calificación"
         });
     }
 
@@ -83,7 +83,7 @@ const getQuizScoreController = async (req, res = response) => {
             return res.status(HttpStatusCodes.NOT_FOUND).json({
                 error: true,
                 statusCode: HttpStatusCodes.NOT_FOUND,
-                details: "Score not found"
+                details: "Calificación no encontrada"
             });
         }
         return res.status(HttpStatusCodes.OK).json({
@@ -94,7 +94,7 @@ const getQuizScoreController = async (req, res = response) => {
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Error fetching quiz score"
+            details: "Error obteniendo la calificación"
         });
     }
 };
