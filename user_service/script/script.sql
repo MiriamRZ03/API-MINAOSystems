@@ -10,8 +10,10 @@ CREATE TABLE IF NOT EXISTS User (
     userPassword VARCHAR(200) NOT NULL,
     userType ENUM('Instructor', 'Student') NOT NULL,
     verificationCode VARCHAR(10),
-    isVerified BOOLEAN DEFAULT FALSE
+    isVerified BOOLEAN DEFAULT FALSE,
+    profileImageUrl VARCHAR(255) NULL 
 );
+
 
 
 CREATE TABLE IF NOT EXISTS Title (
@@ -42,3 +44,4 @@ CREATE TABLE IF NOT EXISTS Student(
 
 INSERT IGNORE INTO Title (titleName) VALUES ('Dr.'), ('Mtro.'), ('Lic.'), ('Ing.'), ('Prof.');
 INSERT IGNORE INTO EducationLevel (levelName) VALUES ('Secundaria'), ('Preparatoria'), ('Universidad');
+

@@ -19,4 +19,23 @@ const getInstructorById = async (instructorId) => {
     }
 };
 
-module.exports = {getInstructorById}
+const updateInstructorProfile = async (instructorId, { titleId, biography }) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [result] = await dbConnection.execute(
+            `UPDATE Instructor
+             SET titleId = ?, biography = ?
+             WHERE instructorId = ?`,
+            [titleId, biography, instructorId]
+        );
+
+        return result;
+    } catch (error) {
+        console.error("Error updating instructor data", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+module.exports = { getInstructorById, updateInstructorProfile };

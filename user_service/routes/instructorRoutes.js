@@ -1,6 +1,9 @@
 const {Router} = require ('express');
 const router = Router();
 const {getInstructor} = require('../controllers/instructorController');
+const uploadProfileImage = require("../middleware/uploadProfileImage");
+const { updateInstructorProfileController } = require("../controllers/profileController");
+
 
 /**
  * @swagger
@@ -31,5 +34,45 @@ const {getInstructor} = require('../controllers/instructorController');
  *         description: Server error
  */
 router.get('/:instructorId', getInstructor);
+
+/**
+ * @swagger
+ * /instructors/{id}:
+ *   put:
+ *     summary: Actualizar perfil de instructor (título, biografía, foto)
+ *     tags: [Instructors]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: formData
+ *         name: titleName
+ *         type: string
+ *       - in: formData
+ *         name: biography
+ *         type: string
+ *       - in: formData
+ *         name: profileImage
+ *         type: file
+ *     responses:
+ *       200:
+ *         description: Perfil de instructor actualizado correctamente
+ */
+router.put('/:id', uploadProfileImage, updateInstructorProfileController);
+
+/**
+ * @swagger
+ * /instructors/{id}:
+ *   put:
+ *     summary: Actualizar perfil del instructor (título profesional y biografía)
+ *     tags: [Instructor]
+ *     consumes:
+ *       - application/json
+ */
+router.put('/:id', updateInstructorProfileController);
 
 module.exports = router;

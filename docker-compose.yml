@@ -1,9 +1,13 @@
-version: "3.9"
+version: '3.9'
 
 services:
-  mysql_users:
+  # ------------------------
+  # MySQL Users
+  # ------------------------
+  db_users:
     image: mysql:8.0
-    container_name: mysql_users
+    container_name: db_users
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_USERS_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_USERS_DB}
@@ -12,12 +16,17 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - users_data:/var/lib/mysql
-      - ./user_service/script/script.sql:/docker-entrypoint-initdb.d/script.sql
+      - db_users_data:/var/lib/mysql
+    networks:
+      - snelnet
 
-  mysql_courses:
+  # ------------------------
+  # MySQL Courses
+  # ------------------------
+  db_courses:
     image: mysql:8.0
-    container_name: mysql_courses
+    container_name: db_courses
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_COURSES_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_COURSES_DB}
@@ -26,9 +35,43 @@ services:
     ports:
       - "3308:3306"
     volumes:
-      - courses_data:/var/lib/mysql
-      - ./course_service/script/script.sql:/docker-entrypoint-initdb.d/script.sql
+      - db_courses_data:/var/lib/mysql
+    networks:
+      - snelnet
+
+  # ------------------------
+  # User Service (Node)
+  # ------------------------
+  user_service:
+    build: ./user_service
+    container_name: user_service
+    restart: always
+    env_file: ./user_service/.env
+    depends_on:
+      - db_users
+    ports:
+      - "3000:3000"
+    networks:
+      - snelnet
+
+  # ------------------------
+  # Course Service (Node)
+  # ------------------------
+  course_service:
+    build: ./course_service
+    container_name: course_service
+    restart: always
+    env_file: ./course_service/.env
+    depends_on:
+      - db_courses
+    ports:
+      - "8000:8000"
+    networks:
+      - snelnet
+
+networks:
+  snelnet:
 
 volumes:
-  users_data:
-  courses_data:
+  db_users_data:
+  db_courses_data:

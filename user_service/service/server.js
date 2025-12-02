@@ -21,6 +21,8 @@ class Server{
         this.app.use(express.json({ limit: '50mb' }));
         this.app.use(express.urlencoded({ limit: '50mb', extended: true }));
         this.app.use(express.static('public'));
+        this.app.use("/minao_systems/students", require('../routes/studentRoutes'));
+
     }
 
     routes(){
@@ -28,6 +30,7 @@ class Server{
         this.app.use("/minao_systems/instructors", require('../routes/instructorRoutes'));
         this.app.use("/minao_systems/students", require('../routes/studentRoutes'));
         this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+        this.app.use("/minao_systems/students", require('../routes/studentRoutes'));
     }
 
     listen() {

@@ -130,4 +130,43 @@ const updateUserVerification = (email) => {
   });
 };
 
-module.exports = {createUser, findUserByEmail, login, findUser, updateUserVerification};
+const updateUserProfile = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [result] = await dbConnection.execute(
+            `UPDATE User 
+             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
+             WHERE userId = ?`,
+            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
+        );
+
+        return result;
+    } catch (error) {
+        console.error("Update user profile error:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+const updateUserProfileBasic = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [result] = await dbConnection.execute(
+            `UPDATE User 
+             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
+             WHERE userId = ?`,
+            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
+        );
+
+        return result;
+    } catch (error) {
+        console.error("Update user profile error:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+
+module.exports = {createUser, findUserByEmail, login, findUser, updateUserVerification, updateUserProfile, updateUserProfileBasic};
