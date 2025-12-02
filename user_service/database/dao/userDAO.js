@@ -8,8 +8,18 @@ const createUser = async (user) => {
         const hashedPassword = await bcrypt.hash(user.userPassword, 10);
 
         const [userResult] = await dbConnection.execute(
-            `INSERT INTO User (userName, paternalSurname, maternalSurname, email, userPassword, userType, verificationCode, isVerified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [user.userName, user.paternalSurname, user.maternalSurname, user.email, hashedPassword, user.userType, user.verificationCode, user.isVerified]
+            `INSERT INTO User (userName, paternalSurname, maternalSurname, email, userPassword, userType, verificationCode, isVerified) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user.userName,
+                user.paternalSurname,
+                user.maternalSurname,
+                user.email,
+                hashedPassword,
+                user.userType,
+                user.verificationCode,
+                user.isVerified
+            ]
         );
 
         const userId = userResult.insertId;
@@ -28,7 +38,7 @@ const createUser = async (user) => {
                 [userId, user.levelId ?? 1, user.average ?? 0.00]
             );
         } else if (user.userType === 'Instructor') {
-            const titleId = titleMap[user.titleName] || 3; 
+            const titleId = titleMap[user.titleName] || 3;
             await dbConnection.execute(
                 `INSERT INTO Instructor (instructorId, titleId, biography) VALUES (?, ?, ?)`,
                 [userId, titleId, user.biography ?? null]
@@ -43,8 +53,10 @@ const createUser = async (user) => {
         await dbConnection.rollback();
         console.error("User creating error:", error);
         throw error;
+    } finally {
+        dbConnection.release();
     }
-}
+};
 
 const findUserByEmail = async (email) => {
     const query = 'SELECT email FROM User WHERE email = ?';
@@ -62,7 +74,7 @@ const findUserByEmail = async (email) => {
     }
 
     return idResult;
-}
+};
 
 const login = async (email, userPassword) => {
     const dbConnection = await connection.getConnection();
@@ -81,7 +93,7 @@ const login = async (email, userPassword) => {
             const isPasswordValid = await bcrypt.compare(userPassword, user.userPassword);
 
             if (!isPasswordValid) {
-                return null; 
+                return null;
             }
 
             loginResult = {
@@ -96,8 +108,68 @@ const login = async (email, userPassword) => {
     } catch (error) {
         console.error("Login error:", error);
         throw error;
+    } finally {
+        dbConnection.release();
     }
+
     return loginResult;
 };
 
-module.exports = { createUser, findUserByEmail, login };
+// Extra functions added below:
+
+const findUser = async (email) => {
+    const query = 'SELECT * FROM User WHERE email = ?';
+    try {
+        const [rows] = await connection.execute(query, [email]);
+        if (rows.length === 0) return null;
+
+        const user = rows[0];
+        user.isVerified = Boolean(user.isVerified);
+        return user;
+    } catch (error) {
+        console.error("Find user by email error:", error);
+        throw error;
+    }
+};
+
+const updateUserVerification = (email) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            UPDATE User 
+            SET isVerified = TRUE, verificationCode = NULL
+            WHERE email = ?;
+        `;
+        connection.query(query, [email], (err, result) => {
+            if (err) return reject(err);
+            resolve(result);
+        });
+    });
+};
+
+const updateUserProfileBasic = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [result] = await dbConnection.execute(
+            `UPDATE User 
+             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
+             WHERE userId = ?`,
+            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
+        );
+
+        return result;
+    } catch (error) {
+        console.error("Update user profile error:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+module.exports = {
+    createUser,
+    findUserByEmail,
+    login,
+    findUser,
+    updateUserVerification,
+    updateUserProfileBasic
+};
