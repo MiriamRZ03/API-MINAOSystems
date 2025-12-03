@@ -1,0 +1,15 @@
+{
+  "name": "quiz_service",
+  "version": "1.0.0",
+  "description": "Microservicio de cuestionarios",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql2": "^2.2.5",
+    "dotenv": "^10.0.0"
+  }
+  
+}

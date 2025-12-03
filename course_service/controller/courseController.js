@@ -1,11 +1,19 @@
 const { request, response } = require("express");
 const path = require('path');
-const { createCourse, updateCourseState, updateCourseDetails, getAllCoursesByInstructor, getCourseById, removeStudentFromCourse } = require("../database/dao/courseDAO");
+const { createCourse,
+    updateCourseState,
+    updateCourseDetails,
+    getAllCoursesByInstructor,
+    getCourseById,
+    removeStudentFromCourse,
+    joinCourse,
+    getCoursesByStudent,
+    getCoursesByName,
+    getCoursesByCategory, 
+    getCoursesByMonth,
+    getCoursesByState } = require("../database/dao/courseDAO");
 const HttpStatusCodes = require('../utils/enums');
-const { createCourse, updateCourseState, updateCourseDetails, 
-    getAllCoursesByInstructor, getCourseById, joinCourse, 
-    getCoursesByStudent, getCoursesByName, getCoursesByCategory, 
-    getCoursesByMonth, getCoursesByState } = require("../database/dao/courseDAO");
+
 
 const createCurso = async(req, res = response) => {
     const { name, description, category, startDate, endDate, state, instructorUserId } = req.body;
@@ -301,6 +309,116 @@ const deactivateCourse = async (req, res = response) => {
         });
     }
 };
+
+
+const getCoursesByStudentController = async (req, res = response) => {
+    const { studentId } = req.params;
+
+    if (!studentId) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            details: "Missing studentId"
+        });
+    }
+
+    try {
+        const courses = await getCoursesByStudent(studentId);
+
+        if (courses.length === 0) {
+            return res.status(HttpStatusCodes.NOT_FOUND).json({
+                error: true,
+                details: "No courses found for this student"
+            });
+        }
+
+        return res.status(HttpStatusCodes.OK).json({
+            courses
+        });
+
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            details: "Error fetching courses. Try again later"
+        });
+    }
+};
+
+const getCoursesByMonthController = async (req, res = response) => {
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            details: "Missing 'year' or 'month' query parameter"
+        });
+    }
+
+    try {
+        const courses = await getCoursesByMonth(parseInt(year), parseInt(month));
+
+        return res.status(HttpStatusCodes.OK).json({ courses });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            details: "Error fetching courses by month"
+        });
+    }
+};
+
+const getCoursesByStateController = async (req, res = response) => {
+    const { state } = req.query;
+
+    if (!state || !["Activo","Inactivo"].includes(state)) {
+        return res.status(HttpStatusCodes.BAD_REQUEST).json({
+            error: true,
+            details: "Missing or invalid 'state' query parameter"
+        });
+    }
+
+    try {
+        const courses = await getCoursesByState(state);
+
+        return res.status(HttpStatusCodes.OK).json({ courses });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            details: "Error fetching courses by state"
+        });
+    }
+};
+
+const deleteStudentFromCourse = async (req, res) => {
+    const { studentId, courseId } = req.params;  // Obtener el ID del estudiante y del curso de los parámetros de la URL
+
+    const dbConnection = await connection.getConnection();
+
+    try {
+        // Comprobar si el estudiante está inscrito en el curso
+        const [enrollmentCheck] = await dbConnection.execute(
+            `SELECT * FROM Enrollments WHERE studentId = ? AND courseId = ?`,
+            [studentId, courseId]
+        );
+
+        if (enrollmentCheck.length === 0) {
+            return res.status(404).json({ message: "Student is not enrolled in this course." });
+        }
+
+        // Eliminar al estudiante del curso
+        await dbConnection.execute(
+            `DELETE FROM Enrollments WHERE studentId = ? AND courseId = ?`,
+            [studentId, courseId]
+        );
+
+        return res.status(200).json({ message: "Student successfully removed from the course." });
+    } catch (error) {
+        console.error("Error removing student from course:", error);
+        return res.status(500).json({ message: "Error removing student from the course." });
+    } finally {
+        dbConnection.release();
+    }
+};
+
+
 
 module.exports = { 
     createCurso, 

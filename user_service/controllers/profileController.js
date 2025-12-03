@@ -102,6 +102,29 @@ const updateUserProfileController = async (req, res = response) => {
     }
 };
 
+const updateUserBasicProfile = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [result] = await dbConnection.execute(
+            `UPDATE User 
+             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
+             WHERE userId = ?`,
+            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error("No se pudo actualizar el perfil, asegúrate de que el usuario exista.");
+        }
+
+        return { success: true, message: "Perfil actualizado correctamente." };
+    } catch (error) {
+        console.error("Error al actualizar el perfil del usuario:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
 /**
  * PUT /instructors/:id
  * - Actualiza título profesional y biografía (biografía solo instructores)
@@ -180,5 +203,6 @@ const updateStudentProfileController = async (req, res = response) => {
 module.exports = {
     updateUserProfileController,
     updateInstructorProfileController,
-    updateStudentProfileController
+    updateStudentProfileController,
+    updateUserBasicProfile
 };

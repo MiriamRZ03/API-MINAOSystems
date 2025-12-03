@@ -1,10 +1,9 @@
-const {Router} = require ('express');
+const { Router } = require('express');
 const router = Router();
-const{registerUser, userLogin, verifyUser}=require('../controllers/userController');
+const { registerUser, userLogin, verifyUser } = require('../controllers/userController');
 const uploadProfileImage = require("../middleware/uploadProfileImage");
 const { verifyToken } = require('../middleware/authMiddleware');
-const { updateUserBasicProfileController } = require("../controllers/profileController");
-
+const { updateUserBasicProfile } = require("../controllers/profileController");
 
 /**
  * @swagger
@@ -18,13 +17,14 @@ const { updateUserBasicProfileController } = require("../controllers/profileCont
  * /users/registerUser:
  *   post:
  *     summary: Registrar un nuevo usuario
+ *     operationId: registerUser
  *     tags: [Users]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#components/schemas/NewUser'
+ *             $ref: '#/components/schemas/NewUser'
  *     responses:
  *       201:
  *         description: Registro de usuario exitoso
@@ -50,10 +50,8 @@ router.post('/registerUser', registerUser);
  *             properties:
  *               email:
  *                 type: string
- *                 description: Correo electrónico del usurio
  *               userPassword:
  *                 type: string
- *                 description: Contraseña del usuario
  *     responses:
  *       200:
  *         description: Usuario autenticado correctamente
@@ -79,19 +77,16 @@ router.post('/login', userLogin);
  *             properties:
  *               email:
  *                 type: string
- *                 description: Correo electrónico del usurio
  *               verificationCode:
  *                 type: string
- *                 description: Código de verificación enviado al correo electrónico
  *     responses:
  *       200:
  *         description: Cuenta verificada correctamente
  *       400:
- *         description: Datos invalidos o código incorrecto
+ *         description: Datos inválidos o código incorrecto
  *       500:
  *         description: Error interno del servidor
  */
-
 router.post('/verify', verifyUser);
 
 /**
@@ -128,44 +123,11 @@ router.post('/verify', verifyUser);
  *       500:
  *         description: Error del servidor
  */
-router.put('/:id', uploadProfileImage, updateUserBasicProfile);
-
-/**
- * @swagger
- * /users/{id}:
- *   put:
- *     summary: Actualizar perfil básico de usuario (nombre, apellidos, foto)
- *     tags: [Users]
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *       - in: formData
- *         name: userName
- *         type: string
- *       - in: formData
- *         name: paternalSurname
- *         type: string
- *       - in: formData
- *         name: maternalSurname
- *         type: string
- *       - in: formData
- *         name: profileImage
- *         type: file
- *     responses:
- *       200:
- *         description: Perfil actualizado correctamente
- */
-router.put(
-  '/:id',
-  verifyToken,          
-  uploadProfileImage,     
+router.put('/:id',
+  verifyToken,           // Asegura que el usuario está autenticado
+  uploadProfileImage,     // Subir la imagen de perfil
   (req, res, next) => {
-      // Revisa que el usuario  sea el dueño del perfil
+      // Revisa que el usuario sea el dueño del perfil
       const { id } = req.params;
       if (parseInt(id, 10) !== req.user.userId) {
           return res.status(403).json({
@@ -176,8 +138,7 @@ router.put(
       }
       next();
   },
-  updateUserProfileController
+  updateUserBasicProfile // Controlador para actualizar el perfil
 );
-
 
 module.exports = router;
