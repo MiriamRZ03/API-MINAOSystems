@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const router = Router();
-const { getStudent } = require('../controllers/studentController');
+const { getStudent, updateAverage} = require('../controllers/studentController');
 const { updateStudentProfileController } = require("../controllers/profileController");
 
 /**
@@ -70,5 +70,41 @@ router.get('/:studentId', getStudent);
  *         description: Error del servidor
  */
 router.put('/:id', updateStudentProfileController);
+
+/**
+ * @swagger
+ * /students/{studentId}/average:
+ *   put:
+ *     summary: Actualiza el promedio de un estudiante
+ *     description: Actualiza el valor del promedio de un estudiante dado su ID.
+ *     tags: [Students]
+ *     parameters: 
+ *       - in: path 
+ *         name: studentId
+ *         description: ID del estudiante a actualizar
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       description: Objeto con el nuevo promedio del estudiante
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               average:
+ *                 type: number
+ *                 format: float
+ *     responses:
+ *       200:
+ *         description: Promedio actualizado correctamente
+ *       400:
+ *         description: Solicitud incorrecta
+ *       500:
+ *         description: Error interno del servidor
+ */
+
+router.put('/:studentId/average', updateAverage);
 
 module.exports = router;

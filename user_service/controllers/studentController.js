@@ -1,9 +1,6 @@
 const { request, response } = require("express");
-const e = require ("express");
-const path = require('path');
 const HttpStatusCodes = require('../utils/enums');
-const { count } = require("console");
-const {getStudentById} = require("../database/dao/studentDAO");
+const {getStudentById, updateStudentAverage} = require("../database/dao/studentDAO");
 
 const getStudent = async (req, res = response) => {
     const { studentId } = req.params;
@@ -30,4 +27,17 @@ const getStudent = async (req, res = response) => {
     }
 };
 
-module.exports = {getStudent};
+const updateAverage = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { average } = req.body;
+        if (average === undefined) return res.status(400).json({ success: false, message: "average required" });
+
+        await updateStudentAverage(studentId, average);
+        res.status(200).json({ success: true, message: "Average updated" });
+    } catch (err) {
+        console.error("updateAverage controller error:", err);
+        res.status(500).json({ success: false, message: "Error updating average" });
+    }
+};
+module.exports = {getStudent, updateAverage};

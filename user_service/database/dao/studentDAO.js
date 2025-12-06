@@ -24,7 +24,7 @@ const getStudentById = async (studentId) => {
         console.error("Error retrieving student data", error);
         throw error;
     } finally {
-        dbConnection.release();   // <-- esto faltaba
+        dbConnection.release();   
     }
 };
 
@@ -47,4 +47,19 @@ const updateStudentProfile = async (studentId, { levelId }) => {
     }
 };
 
-module.exports = { getStudentById, updateStudentProfile };
+const updateStudentAverage = async (studentId, average) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        await dbConnection.execute(
+            `UPDATE Student SET average = ? WHERE studentId = ?`,
+            [average, studentId]
+        );
+    } catch (err) {
+        console.error("Error updating student average:", err);
+        throw err;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+module.exports = { getStudentById, updateStudentProfile, updateStudentAverage };
