@@ -1,64 +1,54 @@
 const connection = require("../pool");
 
-// CU-12: Eliminar cuestionario
-const deleteQuiz = async (quizId) => {
+ const createQuiz = async (quiz) => {
     const dbConnection = await connection.getConnection();
     try {
-        const [result] = await dbConnection.execute(
-            `DELETE FROM Quiz WHERE quizId = ?`,
-            [quizId]
+        await dbConnection.beginTransaction();
+
+        const [quizResult] = await dbConnection.execute(
+            `INSERT INTO Quiz (title, description, numberQuestion, weighing, cursoId) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [
+                quiz.title,
+                quiz.description ?? 'Añada una escripción',
+                quiz.questions.length,
+                quiz.weighing ?? 0,
+                quiz.cursoId
+            ]
         );
-        return result;
+
+        const quizId = quizResult.insertId;
+
+        for (const question of quiz.questions) {
+
+            const [questionResult] = await dbConnection.execute(
+                `INSERT INTO Question (quizId, questionText)
+                 VALUES (?, ?)`,
+                [quizId, question.text] 
+            );
+
+            const questionId = questionResult.insertId;
+
+            for (const option of question.options) {
+
+                await dbConnection.execute(
+                    `INSERT INTO OptionAnswer (questionId, optionText, isCorrect)
+                     VALUES (?, ?, ?)`,
+                    [questionId, option.text, option.isCorrect ? 1 : 0] 
+                );
+            }
+        }
+
+        await dbConnection.commit();
+        return { success: true, quizId };
+
     } catch (error) {
-        console.error("Error deleting quiz:", error);
+        await dbConnection.rollback();
+        console.error("Quiz creating error:", error);
         throw error;
     } finally {
         dbConnection.release();
     }
 };
 
-// CU-13: Contestar cuestionario
-const submitQuizAnswers = async (quizId, studentUserId, answers) => {
-    const dbConnection = await connection.getConnection();
-    try {
-        // Aquí asumimos que 'answers' es un objeto con preguntas y respuestas.
-        // Guardamos las respuestas del estudiante
-        const query = `INSERT INTO Report (cursoId, studentUserId, type, data) VALUES (?, ?, ?, ?)`;
-        const [result] = await dbConnection.execute(query, [
-            quizId, studentUserId, "Por estudiante", JSON.stringify(answers)
-        ]);
-        return result;
-    } catch (error) {
-        console.error("Error submitting quiz answers:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-// CU-14: Ver calificación
-const getQuizScore = async (quizId, studentUserId) => {
-    const dbConnection = await connection.getConnection();
-    try {
-        const query = `
-            SELECT score
-            FROM Score
-            WHERE cursoId = ? AND studentUserId = ? AND quizId = ?
-        `;
-        const [rows] = await dbConnection.execute(query, [
-            quizId, studentUserId
-        ]);
-        return rows[0];
-    } catch (error) {
-        console.error("Error fetching quiz score:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
-    }
-};
-
-module.exports = {
-    deleteQuiz,
-    submitQuizAnswers,
-    getQuizScore
-};
+module.exports = {createQuiz};

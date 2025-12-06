@@ -1,157 +1,49 @@
+version: "3.9"
+
 services:
-  # ------------------------
-  # MySQL Users
-  # ------------------------
   mysql_users:
     image: mysql:8.0
     container_name: mysql_users
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_USERS_ROOT_PASSWORD}
-      MYSQL_DATABASE: minao_users
-      MYSQL_USER: MINAO_Systems
-      MYSQL_PASSWORD: MinaoUsersRed
+      MYSQL_DATABASE: ${MYSQL_USERS_DB}
+      MYSQL_USER: ${MYSQL_USERS_USER}
+      MYSQL_PASSWORD: ${MYSQL_USERS_PASSWORD}
     ports:
-      - "3318:3306"
+      - "3307:3306"
     volumes:
-      - db_users_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - minao_network
+      - users_data:/var/lib/mysql
+      - ./user_service/script/script.sql:/docker-entrypoint-initdb.d/script.sql
 
-  # ------------------------
-  # MySQL Courses
-  # ------------------------
   mysql_courses:
     image: mysql:8.0
     container_name: mysql_courses
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_COURSES_ROOT_PASSWORD}
-      MYSQL_DATABASE: minao_courses
-      MYSQL_USER: MINAO_Systems
-      MYSQL_PASSWORD: MinaoCoursesRed
+      MYSQL_DATABASE: ${MYSQL_COURSES_DB}
+      MYSQL_USER: ${MYSQL_COURSES_USER}
+      MYSQL_PASSWORD: ${MYSQL_COURSES_PASSWORD}
     ports:
       - "3308:3306"
     volumes:
-      - db_courses_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - minao_network
-
-  # ------------------------
-  # Quiz DB
-  # ------------------------
-  quiz_db:
+      - courses_data:/var/lib/mysql
+      - ./course_service/script/script.sql:/docker-entrypoint-initdb.d/script.sql
+  
+  mysql_quizzes:
     image: mysql:8.0
-    container_name: quiz_db
-    restart: always
+    container_name: mysql_quizzes
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: minao_quiz
+      MYSQL_ROOT_PASSWORD: ${MYSQL_QUIZZES_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_QUIZZES_DB}
+      MYSQL_USER: ${MYSQL_QUIZZES_USER}
+      MYSQL_PASSWORD: ${MYSQL_QUIZZES_PASSWORD}
     ports:
-      - "3319:3306"
+      - "3309:3306"
     volumes:
-      - ./sql:/docker-entrypoint-initdb.d
-    networks:
-      - minao_network
-    # Agregar healthcheck para mayor robustez, aunque Quiz Service no tiene dependencia condicional
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # ------------------------
-  # Quiz Service
-  # ------------------------
-  quiz_service:
-    build: ./quiz_service
-    container_name: quiz_service
-    environment:
-      - DATABASE_URL=mysql://root:rootpassword@quiz_db:3306/minao_quiz
-      - DB_HOST=quiz_db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=rootpassword
-      - DB_NAME=minao_quiz
-      - QUIZ_SERVICE_PORT=3001
-      - NODE_ENV=production
-    depends_on:
-      quiz_db:
-        condition: service_healthy # Usar service_healthy si se agregó healthcheck arriba
-    ports:
-      - "3001:3001"
-    networks:
-      - minao_network
-    command: ["/bin/sh", "-c", 
-              "echo 'Waiting for quiz_db:3306...' && 
-               while ! nc -z quiz_db 3306; do 
-                 sleep 1; 
-               done; 
-               echo 'quiz_db is up - starting service' && 
-               npm start"] # Se aplica el script de espera por consistencia.
-
-  # ------------------------
-  # User Service
-  # ------------------------
-  user_service:
-    build: ./user_service
-    container_name: user_service
-    restart: always
-    env_file: ./user_service/.env
-    depends_on:
-      mysql_users:
-        condition: service_healthy
-    ports:
-      - "3000:3000"
-    networks:
-      - minao_network
-    # Comando de espera corregido con sintaxis de lista
-    command: ["/bin/sh", "-c", 
-              "echo 'Waiting for mysql_users:3306...' && 
-               while ! nc -z mysql_users 3306; do 
-                 sleep 1; 
-               done; 
-               echo 'mysql_users is up - starting service' && 
-               npm start"]
-
-  # ------------------------
-  # Course Service
-  # ------------------------
-  course_service:
-    build: ./course_service
-    container_name: course_service
-    restart: always
-    env_file: ./course_service/.env
-    depends_on:
-      mysql_courses:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-    networks:
-      - minao_network
-    # Comando de espera corregido con sintaxis de lista
-    command: ["/bin/sh", "-c", 
-              "echo 'Waiting for mysql_courses:3306...' && 
-               while ! nc -z mysql_courses 3306; do 
-                 sleep 1; 
-               done; 
-               echo 'mysql_courses is up - starting service' && 
-               npm start"]
-
-networks:
-  minao_network:
-    driver: bridge
+      - quizzes_data:/var/lib/mysql
+      - ./quiz_service/script/script.sql:/docker-entrypoint-initdb.d/script.sql
 
 volumes:
-  db_users_data:
-  db_courses_data:
+  users_data:
+  courses_data:
+  quizzes_data:

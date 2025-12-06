@@ -1,96 +1,34 @@
-const { Router } = require('express');
+const {Router} = require ('express');
 const router = Router();
-const {
-    deleteQuizController,
-    submitQuizController,
-    getQuizScoreController
-} = require('../controller/quizController');
+const {createQuestionnaire} = require('../controllers/quizController');
 
 /**
  * @swagger
  * tags:
- *   name: Quizzes
- *   description: Gestión de cuestionarios
+ *   name: Quiz
+ *   description: Endpoints for managing questionnaires
  */
 
 /**
  * @swagger
- * /quizzes/{quizId}:
- *   delete:
- *     summary: Eliminar un cuestionario
- *     tags: [Quizzes]
- *     parameters:
- *       - in: path
- *         name: quizId
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Cuestionario eliminado exitosamente
- *       404:
- *         description: Cuestionario no encontrado
- *       500:
- *         description: Error del servidor
- */
-router.delete('/:quizId', deleteQuizController);
-
-/**
- * @swagger
- * /quizzes/{quizId}/answers:
+ * /quizzes/createQuiz:
  *   post:
- *     summary: Contestar un cuestionario
- *     tags: [Quizzes]
+ *     summary: Crear un cuestionario con preguntas y opciones
+ *     tags: [Quiz]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               studentUserId:
- *                 type: integer
- *                 description: ID del estudiante
- *               answers:
- *                 type: object
- *                 description: Respuestas del cuestionario
+ *             $ref: '#/components/schemas/QuizCreate'
  *     responses:
  *       201:
- *         description: Respuestas enviadas exitosamente
+ *         description: Quiz creado exitosamente
  *       400:
- *         description: Información faltante o inválida
+ *         description: Error en los datos enviados
  *       500:
  *         description: Error del servidor
  */
-router.post('/:quizId/answers', submitQuizController);
-
-/**
- * @swagger
- * /quizzes/{quizId}/score:
- *   get:
- *     summary: Ver calificación de un cuestionario
- *     tags: [Quizzes]
- *     parameters:
- *       - in: path
- *         name: quizId
- *         required: true
- *         schema:
- *           type: integer
- *       - in: query
- *         name: studentUserId
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Calificación obtenida exitosamente
- *       400:
- *         description: Información faltante
- *       404:
- *         description: Calificación no encontrada
- *       500:
- *         description: Error del servidor
- */
-router.get('/:quizId/score', getQuizScoreController);
+router.post('/createQuiz', createQuestionnaire);
 
 module.exports = router;
