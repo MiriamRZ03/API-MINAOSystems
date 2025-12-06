@@ -1,6 +1,6 @@
 const { request, response } = require("express");
 const HttpStatusCodes = require('../utils/enums');
-const {createQuiz} = require ("../database/dao/quizDAO");
+const {createQuiz, updateQuiz} = require ("../database/dao/quizDAO");
 
 const createQuestionnaire = async (req, res) => {
     try {
@@ -39,4 +39,34 @@ const createQuestionnaire = async (req, res) => {
     }
 };
 
-module.exports = {createQuestionnaire};
+const updateQuestionnaire = async (req, res = response) => {
+    try {
+        const { quizId } = req.params;
+        const details = req.body;
+
+        if (!quizId) {
+            return res.status(HttpStatusCodes.BAD_REQUEST).json({
+                error: true,
+                statusCode: HttpStatusCodes.BAD_REQUEST,
+                details: "quizId is required in params."
+            });
+        }
+
+        const result = await updateQuiz(quizId, details);
+
+        return res.status(HttpStatusCodes.OK).json({
+            success: true,
+            message: "Quiz updated successfully.",
+            result
+        });
+    } catch (error) {
+        console.error("Error updating quiz:", error);
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Error updating quiz. Try again later."
+        });
+    }
+};
+
+module.exports = {createQuestionnaire, updateQuestionnaire};

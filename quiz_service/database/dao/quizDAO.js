@@ -51,4 +51,64 @@ const connection = require("../pool");
     }
 };
 
-module.exports = {createQuiz};
+const updateQuiz = async (quizId, details) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        await dbConnection.beginTransaction();
+
+        const { title, description, questions } = details;
+        const fields = [];
+        const values = [];
+
+        if (title) {
+            fields.push("title = ?");
+            values.push(title);
+        }
+        if (description) {
+            fields.push("description = ?");
+            values.push(description);
+        }
+
+        if (fields.length > 0) {
+            values.push(quizId);
+            const query = `UPDATE Quiz SET ${fields.join(", ")} WHERE quizId = ?`;
+            await dbConnection.execute(query, values);
+        }
+
+        if (questions && questions.length > 0) {
+            for (const question of questions) {
+                if (question.questionId) {
+                    if (question.text) {
+                        await dbConnection.execute(
+                            `UPDATE Question SET questionText = ? WHERE questionId = ?`,
+                            [question.text, question.questionId]
+                        );
+                    }
+
+                    if (question.options && question.options.length > 0) {
+                        for (const option of question.options) {
+                            if (option.optionId) {
+                                await dbConnection.execute(
+                                    `UPDATE OptionAnswer SET optionText = ?, isCorrect = ? WHERE optionId = ?`,
+                                    [option.text, option.isCorrect ? 1 : 0, option.optionId]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        await dbConnection.commit();
+        return { success: true };
+    } catch (error) {
+        await dbConnection.rollback();
+        console.error("Error updating quiz:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+
+module.exports = {createQuiz, updateQuiz};

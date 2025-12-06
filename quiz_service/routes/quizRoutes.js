@@ -1,6 +1,6 @@
 const {Router} = require ('express');
 const router = Router();
-const {createQuestionnaire} = require('../controller/quizController');
+const {createQuestionnaire, updateQuestionnaire} = require('../controller/quizController');
 
 /**
  * @swagger
@@ -30,5 +30,60 @@ const {createQuestionnaire} = require('../controller/quizController');
  *         description: Error del servidor
  */
 router.post('/createQuiz', createQuestionnaire);
+
+/**
+ * @swagger
+ * /quizzes/updateQuiz/{quizId}:
+ *   put:
+ *     summary: Update a quiz including title, description, questions, and options
+ *     tags:
+ *       - Quiz
+ *     parameters:
+ *       - in: path
+ *         name: quizId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the quiz to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               questions:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     questionId:
+ *                       type: integer
+ *                     text:
+ *                       type: string
+ *                     options:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           optionId:
+ *                             type: integer
+ *                           text:
+ *                             type: string
+ *                           isCorrect:
+ *                             type: boolean
+ *     responses:
+ *       200:
+ *         description: Quiz updated successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+router.put("/updateQuiz/:quizId", updateQuestionnaire);
 
 module.exports = router;
