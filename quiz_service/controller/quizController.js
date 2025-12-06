@@ -1,6 +1,6 @@
 const { request, response } = require("express");
 const HttpStatusCodes = require('../utils/enums');
-const {createQuiz, updateQuiz, deleteQuiz} = require ("../database/dao/quizDAO");
+const {createQuiz, updateQuiz, deleteQuiz, getAllQuiz} = require ("../database/dao/quizDAO");
 
 const createQuestionnaire = async (req, res) => {
     try {
@@ -103,4 +103,32 @@ const deleteQuestionnaire = async (req, res = response) => {
         });
     }
 };
-module.exports = {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire};
+
+const getQuizzesByCourse = async (req, res = response) => {
+    try {
+        const { cursoId } = req.params;
+
+        if (!cursoId) {
+            return res.status(HttpStatusCodes.BAD_REQUEST).json({
+                error: true,
+                statusCode: HttpStatusCodes.BAD_REQUEST,
+                details: "cursoId is required in params."
+            });
+        }
+
+        const quizzes = await getAllQuiz(cursoId);
+
+        return res.status(HttpStatusCodes.OK).json({
+            success: true,
+            data: quizzes
+        });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Error fetching quizzes. Try again later."
+        });
+    }
+};
+
+module.exports = {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire, getQuizzesByCourse};

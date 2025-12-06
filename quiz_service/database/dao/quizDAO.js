@@ -125,4 +125,22 @@ const deleteQuiz = async (quizId) => {
         dbConnection.release();
     }
 };
-module.exports = {createQuiz, updateQuiz, deleteQuiz};
+
+const getAllQuiz = async (cursoId) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [rows] = await dbConnection.execute(
+            `SELECT quizId, title, description, creationDate, numberQuestion 
+             FROM Quiz WHERE cursoId = ?`,
+            [cursoId]
+        );
+        return rows; 
+    } catch (error) {
+        console.error("Error fetching quizzes by course:", error);
+        throw error;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+module.exports = {createQuiz, updateQuiz, deleteQuiz, getAllQuiz};

@@ -1,6 +1,7 @@
 const {Router} = require ('express');
 const router = Router();
-const {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire} = require('../controller/quizController');
+const {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire,
+    getQuizzesByCourse} = require('../controller/quizController');
 
 /**
  * @swagger
@@ -112,5 +113,49 @@ router.put("/updateQuiz/:quizId", updateQuestionnaire);
  */
 router.delete("/deleteQuiz/:quizId", deleteQuestionnaire);
 
-
+/**
+ * @swagger
+ * /quizzes/course/{cursoId}:
+ *   get:
+ *     summary: Get all quizzes related to a course
+ *     tags:
+ *       - Quiz
+ *     parameters:
+ *       - in: path
+ *         name: cursoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the course
+ *     responses:
+ *       200:
+ *         description: List of quizzes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       quizId:
+ *                         type: integer
+ *                       title:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       creationDate:
+ *                         type: string
+ *                       numberQuestion:
+ *                         type: integer
+ *       400:
+ *         description: Bad request (cursoId missing)
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/course/:cursoId", getQuizzesByCourse);
 module.exports = router;
