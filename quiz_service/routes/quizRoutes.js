@@ -1,7 +1,7 @@
 const {Router} = require ('express');
 const router = Router();
-const {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire,
-    getQuizzesByCourse, searchQuizByTitle, searchQuizByDate, getQuizDetailForUser} = require('../controller/quizController');
+const {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire, getQuizzesByCourse, 
+    searchQuizByTitle, searchQuizByDate, getQuizDetailForUser, answerQuiz} = require('../controller/quizController');
 
 /**
  * @swagger
@@ -237,4 +237,48 @@ router.get("/searchByDate", searchQuizByDate);
  *         description: Quiz not found
  */
 router.get("/:quizId/view", getQuizDetailForUser);
+
+/**
+ * @swagger
+ * /quizzes/answerQuiz:
+ *   post:
+ *     summary: Permite que un estudiante conteste un cuestionario
+ *     tags: [Quiz]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               studentUserId:
+ *                 type: integer
+ *               quizId:
+ *                 type: integer
+ *               answers:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     questionId:
+ *                       type: integer
+ *                     optionId:
+ *                       type: integer
+ *           example:
+ *             studentUserId: 4
+ *             quizId: 2
+ *             answers:
+ *               - questionId: 10
+ *                 optionId: 40
+ *               - questionId: 11
+ *                 optionId: 44
+ *     responses:
+ *       200:
+ *         description: Quiz respondido correctamente
+ *       400:
+ *         description: Datos incompletos
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/answerQuiz', answerQuiz);
 module.exports = router;

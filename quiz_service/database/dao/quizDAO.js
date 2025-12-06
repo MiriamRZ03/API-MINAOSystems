@@ -1,46 +1,49 @@
 const connection = require("../pool");
 
- const createQuiz = async (quiz) => {
-    const dbConnection = await connection.getConnection();
+const createQuiz = async (quiz) => {
+      const dbConnection = await connection.getConnection();
     try {
         await dbConnection.beginTransaction();
 
+        const totalWeighing = quiz.questions.reduce((sum, q) => {
+            return sum + (q.points ?? 1);
+        }, 0);
+
         const [quizResult] = await dbConnection.execute(
-            `INSERT INTO Quiz (title, description, numberQuestion, weighing, cursoId) 
-             VALUES (?, ?, ?, ?, ?)`,
+            `INSERT INTO Quiz (title, description, numberQuestion, weighing, cursoId, status) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 quiz.title,
-                quiz.description ?? 'Añada una escripción',
+                quiz.description ?? 'Añada una descripción',
                 quiz.questions.length,
-                quiz.weighing ?? 0,
-                quiz.cursoId
+                totalWeighing,
+                quiz.cursoId,
+                quiz.status ?? 'Activo' 
             ]
         );
 
         const quizId = quizResult.insertId;
 
         for (const question of quiz.questions) {
-
             const [questionResult] = await dbConnection.execute(
-                `INSERT INTO Question (quizId, questionText)
-                 VALUES (?, ?)`,
-                [quizId, question.text] 
+                `INSERT INTO Question (quizId, questionText, points)
+                 VALUES (?, ?, ?)`,
+                [quizId, question.text, question.points ?? 1]
             );
 
             const questionId = questionResult.insertId;
 
             for (const option of question.options) {
-
                 await dbConnection.execute(
                     `INSERT INTO OptionAnswer (questionId, optionText, isCorrect)
                      VALUES (?, ?, ?)`,
-                    [questionId, option.text, option.isCorrect ? 1 : 0] 
+                    [questionId, option.text, option.isCorrect ? 1 : 0]
                 );
             }
         }
 
         await dbConnection.commit();
-        return { success: true, quizId };
+        return { success: true, quizId, totalWeighing };
 
     } catch (error) {
         await dbConnection.rollback();
@@ -213,4 +216,76 @@ const getQuizById = async (quizId) => {
     }
 };
 
-module.exports = {createQuiz, updateQuiz, deleteQuiz, getAllQuiz, getQuizByTitle, getQuizByDateCreation, getQuizById};
+const submitQuizAnswers = async (answers, quizId, studentUserId) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [questions] = await dbConnection.execute(
+            `SELECT questionId, points FROM Question WHERE quizId = ?`,
+            [quizId]
+        );
+        if (questions.length === 0) throw new Error("No questions found for this quiz");
+
+        const [quizData] = await dbConnection.execute(
+            `SELECT cursoId FROM Quiz WHERE quizId = ?`,
+            [quizId]
+        );
+        const cursoId = quizData[0]?.cursoId;
+        if (!cursoId) throw new Error("Course not found for this quiz");
+
+        const [attempts] = await dbConnection.execute(
+            `SELECT COUNT(*) AS count FROM Score WHERE quizId = ? AND studentUserId = ?`,
+            [quizId, studentUserId]
+        );
+        const attemptNumber = attempts[0].count + 1;
+
+        for (const ans of answers) {
+            const [correctRow] = await dbConnection.execute(
+                `SELECT isCorrect FROM OptionAnswer WHERE optionId = ?`,
+                [ans.optionId]
+            );
+            const isCorrect = correctRow[0]?.isCorrect ? 1 : 0;
+
+            await dbConnection.execute(
+                `INSERT INTO StudentResponse (quizId, studentUserId, questionId, optionId, isCorrect, attemptNumber)
+                 VALUES (?, ?, ?, ?, ?, ?)`,
+                [quizId, studentUserId, ans.questionId, ans.optionId, isCorrect, attemptNumber]
+            );
+        }
+
+        const [responses] = await dbConnection.execute(
+            `SELECT questionId, isCorrect FROM StudentResponse
+             WHERE quizId = ? AND studentUserId = ? AND attemptNumber = ?`,
+            [quizId, studentUserId, attemptNumber]
+        );
+
+        let score = 0;
+        for (const resp of responses) {
+            if (resp.isCorrect) {
+                const q = questions.find(q => q.questionId === resp.questionId);
+                score += q?.points || 0;
+            }
+        }
+
+        await dbConnection.execute(
+            `INSERT INTO Score (quizId, cursoId, studentUserId, score, attemptNumber)
+             VALUES (?, ?, ?, ?, ?)`,
+            [quizId, cursoId, studentUserId, score, attemptNumber]
+        );
+
+        await dbConnection.execute(
+            `UPDATE Quiz SET status = 'Inactivo' WHERE quizId = ?`,
+            [quizId]
+        );
+
+        return { success: true, score, attemptNumber };
+
+    } catch (err) {
+        console.error("Error submitQuizAndScore DAO:", err);
+        throw err;
+    } finally {
+        dbConnection.release();
+    }
+};
+
+module.exports = {createQuiz, updateQuiz, deleteQuiz, getAllQuiz, getQuizByTitle, 
+    getQuizByDateCreation, getQuizById, submitQuizAnswers};

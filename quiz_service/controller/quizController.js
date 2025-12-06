@@ -2,41 +2,40 @@ const { request, response } = require("express");
 const HttpStatusCodes = require('../utils/enums');
 const jwt = require('jsonwebtoken');
 const {createQuiz, updateQuiz, deleteQuiz, getAllQuiz, getQuizByTitle, getQuizByDateCreation,
-    getQuizById} = require ("../database/dao/quizDAO");
+    getQuizById, submitQuizAnswers} = require ("../database/dao/quizDAO");
 
 const createQuestionnaire = async (req, res) => {
     try {
-        const { title, description, creationDate, weighing, cursoId, questions } = req.body;
+        const { title, description, cursoId, questions, status } = req.body;
 
         if (!title || !cursoId || !questions) {
             return res.status(HttpStatusCodes.BAD_REQUEST).json({
                 error: true,
                 statusCode: HttpStatusCodes.BAD_REQUEST,
-                details: "Title, course ID, and questionnaire are required."
+                details: "Title, course ID and questions are required."
             });
         }
 
         const result = await createQuiz({
             title,
             description,
-            creationDate,
-            weighing,
             cursoId,
-            questions
+            questions,
+            status  
         });
 
         return res.status(HttpStatusCodes.CREATED).json({
             success: true,
-            message: "questionnaire successfully created.",
-            quizId: result.quizId
+            message: "Questionnaire successfully created.",
+            quizId: result.quizId,
+            totalWeighing: result.totalWeighing
         });
 
     } catch (error) {
-        console.log(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
             error: true,
             statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Error creating questionnaire. Try again later"
+            details: "Error creating questionnaire. Try again later."
         });
     }
 };
@@ -213,9 +212,7 @@ const getQuizDetailForUser = async (req, res) => {
 
         try {
             userRole = getRoleFromToken(req); 
-            console.log("ROLE OBTENIDO:", userRole);
         } catch (tokenError) {
-            console.error("ERROR OBTENIENDO EL ROL:", tokenError.message);
             return res.status(HttpStatusCodes.UNAUTHORIZED).json({
                 success: false,
                 message: tokenError.message
@@ -251,5 +248,35 @@ const getQuizDetailForUser = async (req, res) => {
         });
     }
 };
+
+const answerQuiz = async (req, res) => {
+   try {
+        const { studentUserId, quizId, answers } = req.body;
+
+        if (!studentUserId || !quizId || !Array.isArray(answers) || answers.length === 0) {
+            return res.status(HttpStatusCodes.BAD_REQUEST).json({
+                success: false,
+                message: "studentUserId, quizId and answers are required"
+            });
+        }
+
+        const result = await submitQuizAnswers(answers, quizId, studentUserId);
+
+        return res.status(HttpStatusCodes.OK).json({
+            success: true,
+            message: `Quiz answered correctly. Attempt #${result.attemptNumber}`,
+            score: result.score,
+            attemptNumber: result.attemptNumber
+        });
+
+    } catch (err) {
+        console.error("submitQuizController Error:", err);
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: "Error registering quiz answers"
+        });
+    }
+};
+
 module.exports = {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire, getQuizzesByCourse, 
-    searchQuizByTitle, searchQuizByDate, getQuizDetailForUser};
+    searchQuizByTitle, searchQuizByDate, getQuizDetailForUser, answerQuiz};
