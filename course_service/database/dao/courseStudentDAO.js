@@ -33,4 +33,20 @@ const getStudentCountInCourse = async (cursoId) => {
         dbConnection.release();
     }
 };
-module.exports = { removeStudentFromCourse, getStudentCountInCourse };
+
+const getStudentIdsInCourse = async (courseId) => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [rows] = await dbConnection.execute(
+            `SELECT studentUserId FROM Curso_Student WHERE cursoId = ?`,
+            [courseId]
+        );
+        return rows.map(r => r.studentUserId);
+    } catch (err) {
+        console.error("Error in getStudentIdsInCourse DAO:", err);
+        return [];
+    } finally {
+        dbConnection.release();
+    }
+};
+module.exports = { removeStudentFromCourse, getStudentCountInCourse, getStudentIdsInCourse};

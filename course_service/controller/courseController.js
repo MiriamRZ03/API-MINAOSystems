@@ -1,9 +1,7 @@
 const { request, response } = require("express");
-const path = require('path');
 const { createCourse, updateCourseState, updateCourseDetails, getAllCoursesByInstructor, getCourseById, removeStudentFromCourse,
     joinCourse, getCoursesByStudent, getCoursesByName, getCoursesByCategory, getCoursesByMonth, getCoursesByState,
     getCourseCategory, updateCourseCategory } = require("../database/dao/courseDAO");
-const {getStudentCountInCourse} = require ("../database/dao/courseStudentDAO")
 const HttpStatusCodes = require('../utils/enums');
 
 
@@ -439,32 +437,6 @@ const modifyCategory = async (req, res) => {
     }
 };
 
-const getCourseStudentCount = async (req, res) => {
-    try {
-        const { courseId } = req.params;
-        if (!courseId) {
-            return res.status(HttpStatusCodes.BAD_REQUEST).json({
-                success: false,
-                message: "courseId is required"
-            });
-        }
-
-        const count = await getStudentCountInCourse(courseId);
-
-        res.status(HttpStatusCodes.OK).json({
-            success: true,
-            courseId,
-            studentCount: count
-        });
-    } catch (err) {
-        console.error("getCourseStudentCount Controller Error:", err);
-        res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: "Error obtaining student count"
-        });
-    }
-};
-
 module.exports = { createCurso, updateCourse, setCourseState, getCourseDetailById, getCoursesByInstructor, joinCurso, getCoursesByStudentController, getCoursesByNameController, 
     getCoursesByCategoryController, getCoursesByMonthController, getCoursesByStateController, deleteStudentFromCourse, deactivateCourse, unenrollStudentFromCourse,
-    getCategory,modifyCategory,getCourseStudentCount};
+    getCategory,modifyCategory};
