@@ -219,7 +219,7 @@ const unenrollStudentFromCourse = async (req, res = response) => {
     }
 };
 
-// Search courses by name
+
 const getCoursesByNameController = async (req, res = response) => {
     const { name } = req.query;
 
@@ -242,7 +242,7 @@ const getCoursesByNameController = async (req, res = response) => {
     }
 };
 
-// Search courses by category
+
 const getCoursesByCategoryController = async (req, res = response) => {
     const { category } = req.query;
 
@@ -265,7 +265,7 @@ const getCoursesByCategoryController = async (req, res = response) => {
     }
 };
 
-// Deactivate course
+
 const deactivateCourse = async (req, res = response) => {
     const { id } = req.params;
 
