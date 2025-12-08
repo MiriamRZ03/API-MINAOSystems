@@ -1,13 +1,29 @@
 const { Router } = require('express');
 const router = Router();
 
-const {createCurso, setCourseState, updateCourse, getCourseDetailById, getCoursesByInstructor, joinCurso,
-    getCoursesByStudentController, getCoursesByNameController, getCoursesByCategoryController, getCoursesByMonthController,
-    getCoursesByStateController, deactivateCourse, unenrollStudentFromCourse, deleteStudentFromCourse, getCategory,
-    modifyCategory, getCourseReportInfo} = require('../controller/courseController');
+const {
+        createCurso,
+        setCourseState, 
+        updateCourse, 
+        getCourseDetailById, 
+        getCoursesByInstructor, 
+        joinCurso,
+        getCoursesByStudentController, 
+        getCoursesByNameController, 
+        getCoursesByCategoryController, 
+        getCoursesByMonthController,
+        getCoursesByStateController, 
+        deactivateCourse, 
+        unenrollStudentFromCourse, 
+        deleteStudentFromCourse, 
+        getCategory,
+        modifyCategory, 
+        getCourseReportInfo
+    } = require('../controller/courseController');
 
-const { verifyToken, requireInstructor, requireStudent } = require('../middleware/authMiddleware');
 
+    // Desactivado temporalmente para poder realizar las pruebas con postman más fluidamente
+//const { verifyToken, requireInstructor, requireStudent } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -378,8 +394,6 @@ router.get('/search/by-category', getCoursesByCategoryController);
  *         description: Server error
  */
 router.get('/search/by-month', getCoursesByMonthController);
-
-
 
 /**
  * @swagger
