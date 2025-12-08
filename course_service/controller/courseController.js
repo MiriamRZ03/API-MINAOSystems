@@ -3,6 +3,7 @@ const { createCourse, updateCourseState, updateCourseDetails, getAllCoursesByIns
     joinCourse, getCoursesByStudent, getCoursesByName, getCoursesByCategory, getCoursesByMonth, getCoursesByState,
     getCourseCategory, updateCourseCategory } = require("../database/dao/courseDAO");
 const HttpStatusCodes = require('../utils/enums');
+const { deleteStudentFromCourseDAO } = require("../database/dao/courseDAO");
 
 
 const createCurso = async(req, res = response) => {
@@ -377,36 +378,35 @@ const getCoursesByStateController = async (req, res = response) => {
     }
 };
 
-const deleteStudentFromCourse = async (req, res) => {
-    const { studentId, courseId } = req.params;  // Obtener el ID del estudiante y del curso de los parámetros de la URL
 
-    const dbConnection = await connection.getConnection();
+
+
+
+const deleteStudentFromCourse = async (req, res) => {
+    const { studentId, courseId } = req.params;
 
     try {
-        // Comprobar si el estudiante está inscrito en el curso
-        const [enrollmentCheck] = await dbConnection.execute(
-            `SELECT * FROM Enrollments WHERE studentId = ? AND courseId = ?`,
-            [studentId, courseId]
-        );
+        const result = await deleteStudentFromCourseDAO(studentId, courseId);
 
-        if (enrollmentCheck.length === 0) {
-            return res.status(404).json({ message: "Student is not enrolled in this course." });
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Student is not enrolled in this course."
+            });
         }
 
-        // Eliminar al estudiante del curso
-        await dbConnection.execute(
-            `DELETE FROM Enrollments WHERE studentId = ? AND courseId = ?`,
-            [studentId, courseId]
-        );
+        return res.status(200).json({
+            message: "Student successfully removed from the course."
+        });
 
-        return res.status(200).json({ message: "Student successfully removed from the course." });
     } catch (error) {
-        console.error("Error removing student from course:", error);
-        return res.status(500).json({ message: "Error removing student from the course." });
-    } finally {
-        dbConnection.release();
+        console.error("Error removing student:", error);
+        return res.status(500).json({
+            message: "Error removing student from the course"
+        });
     }
 };
+
+
 
 const getCategory = async (req, res) => {
     const { cursoId } = req.params;

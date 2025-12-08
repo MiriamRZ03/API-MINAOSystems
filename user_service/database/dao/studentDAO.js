@@ -5,40 +5,58 @@ const getStudentById = async (studentId) => {
     try {
         const [rows] = await dbConnection.execute(
             `SELECT 
-                user.userName, 
-                user.paternalSurname, 
-                user.maternalSurname, 
-                student.average,
-                level.levelName 
-             FROM User user 
-             INNER JOIN Student student 
-                ON user.userId = student.studentId
-             INNER JOIN EducationLevel level 
-                ON student.levelId = level.levelId 
-             WHERE student.studentId = ?`,
+                u.userName, 
+                u.paternalSurname, 
+                u.maternalSurname, 
+                s.average,
+                l.levelName 
+             FROM User u
+             INNER JOIN Student s 
+                ON u.userId = s.studentId
+             INNER JOIN EducationLevel l 
+                ON s.levelId = l.levelId 
+             WHERE s.studentId = ?`,
             [studentId]
         );
 
-        return rows;
+        return rows; // mantiene compatibilidad
     } catch (error) {
         console.error("Error retrieving student data", error);
         throw error;
     } finally {
-        dbConnection.release();   
+        dbConnection.release();
     }
 };
 
-const updateStudentProfile = async (studentId, { levelId }) => {
+/**
+ * Actualización parcial:
+ * solo se actualizan los campos enviados.
+ */
+const updateStudentProfile = async (studentId, fields) => {
     const dbConnection = await connection.getConnection();
-    try {
-        const [result] = await dbConnection.execute(
-            `UPDATE Student
-             SET levelId = ?
-             WHERE studentId = ?`,
-            [levelId, studentId]
-        );
 
+    try {
+        const updates = [];
+        const values = [];
+
+        if (fields.levelId) {
+            updates.push("levelId = ?");
+            values.push(fields.levelId);
+        }
+
+        if (updates.length === 0) return { affectedRows: 0 };
+
+        const sql = `
+            UPDATE Student
+            SET ${updates.join(", ")}
+            WHERE studentId = ?
+        `;
+
+        values.push(studentId);
+
+        const [result] = await dbConnection.execute(sql, values);
         return result;
+
     } catch (error) {
         console.error("Error updating student data", error);
         throw error;
@@ -62,4 +80,8 @@ const updateStudentAverage = async (studentId, average) => {
     }
 };
 
-module.exports = { getStudentById, updateStudentProfile, updateStudentAverage };
+module.exports = { 
+    getStudentById, 
+    updateStudentProfile, 
+    updateStudentAverage 
+};

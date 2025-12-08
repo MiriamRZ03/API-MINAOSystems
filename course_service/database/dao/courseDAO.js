@@ -262,6 +262,36 @@ const removeStudentFromCourse = async (cursoId, studentUserId) => {
     }
 };
 
+// DAO: eliminar estudiante del curso
+async function deleteStudentFromCourseDAO(studentId, courseId) {
+    const db = await connection.getConnection();
+
+    try {
+        // verificar inscripción
+        const [exists] = await db.execute(
+            `SELECT * FROM Curso_Student WHERE studentUserId = ? AND cursoId = ?`,
+            [studentId, courseId]
+        );
+
+        if (exists.length === 0) {
+            return { affectedRows: 0 }; // el controller validará esto
+        }
+
+        const [result] = await db.execute(
+            `DELETE FROM Curso_Student WHERE studentUserId = ? AND cursoId = ?`,
+            [studentId, courseId]
+        );
+
+        return result;
+
+    } finally {
+        db.release();
+    }
+}
+
+
+
+
 const updateCourseCategory = async (courseId, newCategory) => {
     const dbConnection = await connection.getConnection();
     try {
@@ -277,5 +307,6 @@ const updateCourseCategory = async (courseId, newCategory) => {
 
 module.exports = {createCourse, updateCourseDetails, updateCourseState, getCourseById, getAllCoursesByInstructor, joinCourse,
     getCoursesByStudent, getCoursesByName, getCoursesByCategory, getCoursesByMonth, getCoursesByState, removeStudentFromCourse,
-    getCourseCategory, updateCourseCategory
+    getCourseCategory, updateCourseCategory, deleteStudentFromCourseDAO
+
 };

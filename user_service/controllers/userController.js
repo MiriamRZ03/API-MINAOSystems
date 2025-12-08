@@ -202,9 +202,9 @@ const uploadProfileImage = async (req, res = response) => {
     const profileImageUrl = `/uploads/profile_images/${req.file.filename}`;
 
     try {
-        const result = await updateUserProfileBasic(userId, { profileImageUrl });
+        const result = await updateUserBasicProfile(userId, { profileImageUrl });
 
-        if (result.success) {
+        if (result.affectedRows > 0) {
             return res.status(200).json({
                 message: "Profile image updated successfully",
                 profileImageUrl
@@ -215,6 +215,7 @@ const uploadProfileImage = async (req, res = response) => {
             error: true,
             message: "Error updating profile image"
         });
+
     } catch (error) {
         console.error("Error updating profile image:", error);
         return res.status(500).json({
@@ -223,6 +224,7 @@ const uploadProfileImage = async (req, res = response) => {
         });
     }
 };
+
 
 const fetchStudents = async (req, res) => {
     try {

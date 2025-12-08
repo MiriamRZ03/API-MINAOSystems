@@ -3,7 +3,8 @@ const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
 const HttpStatusCodes = require("../utils/enums");
-const { updateUserProfileBasic } = require("../database/dao/userDAO");
+
+const { updateUserBasicProfile } = require("../database/dao/userDAO");
 const { updateInstructorProfile } = require("../database/dao/instructorDAO");
 const { updateStudentProfile } = require("../database/dao/studentDAO");
 
@@ -33,102 +34,53 @@ const processProfileImage = async (file) => {
     const outputFileName = `${fileNameWithoutExt}.jpg`;
     const outputPath = path.join(avatarsDir, outputFileName);
 
-    // "480p": usamos 854x480 (16:9) y recortamos
+    // Resize 480p (16:9)
     await sharp(file.path)
         .resize({ width: 854, height: 480, fit: "cover" })
         .jpeg({ quality: 90 })
         .toFile(outputPath);
 
-    // eliminación del archivo temporal
+    // eliminar temporal
     fs.unlink(file.path, () => {});
 
-    // ruta pública que verá el front
+    // ruta pública para frontend
     return `/avatars/${outputFileName}`;
 };
 
 /**
  * PUT /users/:id
- * - Actualiza nombre, apellidos y foto de perfil (Instructor o Student)
+ * Actualiza nombre, apellidos y foto (Instructor o Student)
  */
-const updateUserProfileController = async (req, res = response) => {
+const updateUserProfileController = async (req, res) => {
     const { id } = req.params;
     const { userName, paternalSurname, maternalSurname } = req.body;
-
-    if (!userName || !validateName.test(userName)) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({
-            error: true,
-            statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "Invalid name. Please provide a valid name (1-69 chars, Spanish alphabet and spaces)."
-        });
-    }
-
-    if (!paternalSurname || !validateName.test(paternalSurname)) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({
-            error: true,
-            statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "Invalid paternal surname."
-        });
-    }
-
-    if (!maternalSurname || !validateName.test(maternalSurname)) {
-        return res.status(HttpStatusCodes.BAD_REQUEST).json({
-            error: true,
-            statusCode: HttpStatusCodes.BAD_REQUEST,
-            details: "Invalid maternal surname."
-        });
-    }
 
     try {
         const profileImageUrl = await processProfileImage(req.file);
 
-        await updateUserProfileBasic(id, {
+        await updateUserBasicProfile(id, {
             userName,
             paternalSurname,
             maternalSurname,
             profileImageUrl
         });
 
-        return res.status(HttpStatusCodes.OK).json({
+        return res.status(200).json({
             message: "User profile updated successfully",
             profileImageUrl
         });
+
     } catch (error) {
         console.error(error);
-        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
-            error: true,
-            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
-            details: "Error updating user profile"
+        return res.status(500).json({
+            message: "Error updating user profile"
         });
-    }
-};
-
-const updateUserBasicProfile = async (userId, { userName, paternalSurname, maternalSurname, profileImageUrl }) => {
-    const dbConnection = await connection.getConnection();
-    try {
-        const [result] = await dbConnection.execute(
-            `UPDATE User 
-             SET userName = ?, paternalSurname = ?, maternalSurname = ?, profileImageUrl = ?
-             WHERE userId = ?`,
-            [userName, paternalSurname, maternalSurname, profileImageUrl, userId]
-        );
-
-        if (result.affectedRows === 0) {
-            throw new Error("No se pudo actualizar el perfil, asegúrate de que el usuario exista.");
-        }
-
-        return { success: true, message: "Perfil actualizado correctamente." };
-    } catch (error) {
-        console.error("Error al actualizar el perfil del usuario:", error);
-        throw error;
-    } finally {
-        dbConnection.release();
     }
 };
 
 /**
  * PUT /instructors/:id
- * - Actualiza título profesional y biografía (biografía solo instructores)
- * - La foto se edita por /users/:id, así no duplicamos campo
+ * Actualiza título profesional y biografía
  */
 const updateInstructorProfileController = async (req, res = response) => {
     const { id } = req.params;
@@ -157,6 +109,7 @@ const updateInstructorProfileController = async (req, res = response) => {
         return res.status(HttpStatusCodes.OK).json({
             message: "Instructor profile updated successfully"
         });
+
     } catch (error) {
         console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -169,8 +122,7 @@ const updateInstructorProfileController = async (req, res = response) => {
 
 /**
  * PUT /students/:id
- * - Actualiza nivel educativo (Student.levelId)
- * - La foto de perfil se edita por /users/:id
+ * Actualiza nivel educativo
  */
 const updateStudentProfileController = async (req, res = response) => {
     const { id } = req.params;
@@ -190,6 +142,7 @@ const updateStudentProfileController = async (req, res = response) => {
         return res.status(HttpStatusCodes.OK).json({
             message: "Student profile updated successfully"
         });
+
     } catch (error) {
         console.error(error);
         return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -203,6 +156,5 @@ const updateStudentProfileController = async (req, res = response) => {
 module.exports = {
     updateUserProfileController,
     updateInstructorProfileController,
-    updateStudentProfileController,
-    updateUserBasicProfile
+    updateStudentProfileController
 };

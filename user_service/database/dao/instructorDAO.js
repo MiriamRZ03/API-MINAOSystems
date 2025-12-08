@@ -1,12 +1,21 @@
-const connection = require ("../pool");
+const connection = require("../pool");
 
 const getInstructorById = async (instructorId) => {
     const dbConnection = await connection.getConnection();
     try {
         const [rows] = await dbConnection.execute(
-            `SELECT user.userName, user.paternalSurname, user.maternalSurname, instructor.biography, 
-            title.titleName FROM User user INNER JOIN Instructor instructor ON user.userId = instructor.instructorId
-            INNER JOIN Title title ON instructor.titleId = title.titleId WHERE instructor.instructorId = ?`,
+            `SELECT 
+                u.userName, 
+                u.paternalSurname, 
+                u.maternalSurname, 
+                i.biography, 
+                t.titleName 
+             FROM User u 
+             INNER JOIN Instructor i 
+                ON u.userId = i.instructorId
+             INNER JOIN Title t 
+                ON i.titleId = t.titleId 
+             WHERE i.instructorId = ?`,
             [instructorId]
         );
 
@@ -14,22 +23,44 @@ const getInstructorById = async (instructorId) => {
     } catch (error) {
         console.error("Error retrieving instructor data", error);
         throw error;
-    }finally{
+    } finally {
         dbConnection.release();
     }
 };
 
-const updateInstructorProfile = async (instructorId, { titleId, biography }) => {
+/**
+ * Actualización parcial:
+ * solo se actualizan los campos enviados.
+ */
+const updateInstructorProfile = async (instructorId, fields) => {
     const dbConnection = await connection.getConnection();
-    try {
-        const [result] = await dbConnection.execute(
-            `UPDATE Instructor
-             SET titleId = ?, biography = ?
-             WHERE instructorId = ?`,
-            [titleId, biography, instructorId]
-        );
 
+    try {
+        const updates = [];
+        const values = [];
+
+        if (fields.titleId) {
+            updates.push("titleId = ?");
+            values.push(fields.titleId);
+        }
+        if (fields.biography !== undefined) {
+            updates.push("biography = ?");
+            values.push(fields.biography);
+        }
+
+        if (updates.length === 0) return { affectedRows: 0 };
+
+        const sql = `
+            UPDATE Instructor
+            SET ${updates.join(", ")}
+            WHERE instructorId = ?
+        `;
+
+        values.push(instructorId);
+
+        const [result] = await dbConnection.execute(sql, values);
         return result;
+
     } catch (error) {
         console.error("Error updating instructor data", error);
         throw error;
@@ -38,4 +69,7 @@ const updateInstructorProfile = async (instructorId, { titleId, biography }) => 
     }
 };
 
-module.exports = { getInstructorById, updateInstructorProfile };
+module.exports = { 
+    getInstructorById, 
+    updateInstructorProfile 
+};
