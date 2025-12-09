@@ -1,5 +1,6 @@
 const { Router } = require('express');
 const router = Router();
+const { getAllCourses } = require('../database/dao/courseDAO');
 
 const {
         createCurso,
@@ -20,7 +21,7 @@ const {
         modifyCategory, 
         getCourseReportInfo
     } = require('../controller/courseController');
-    const { getAllCourses } = require('../dao/courseDAO');
+ 
 
     // Desactivado temporalmente para poder realizar las pruebas con postman más fluidamente
 //const { verifyToken, requireInstructor, requireStudent } = require('../middleware/authMiddleware');
