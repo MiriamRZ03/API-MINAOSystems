@@ -82,7 +82,26 @@ const getAllCoursesByInstructor = async (instructorUserId) => {
     db.release();
   }
 };
-
+/* -------------------------
+   Get all courses 
+--------------------------*/
+const getAllCourses = async () => {
+    const dbConnection = await connection.getConnection();
+    try {
+        const [rows] = await dbConnection.execute(
+            `SELECT c.cursoId, c.name, c.description, c.category, c.startDate, c.endDate, c.state, u.userName AS instructorName
+             FROM Curso c
+             JOIN User u ON c.instructorUserId = u.userId
+             WHERE c.state = 'Activo'`
+        );
+        return rows;
+    } catch (err) {
+        console.error("Error fetching courses:", err);
+        throw err;
+    } finally {
+        dbConnection.release();
+    }
+};
 /* -------------------------
    Update course details
 --------------------------*/
@@ -411,6 +430,7 @@ module.exports = {
   createCourse,
   getCourseById,
   getAllCoursesByInstructor,
+  getAllCourses,
   updateCourseDetails,
   updateCourseState,
   getCoursesByStudent,

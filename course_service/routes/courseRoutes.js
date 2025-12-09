@@ -20,7 +20,7 @@ const {
         modifyCategory, 
         getCourseReportInfo
     } = require('../controller/courseController');
-
+    const { getAllCourses } = require('../dao/courseDAO');
 
     // Desactivado temporalmente para poder realizar las pruebas con postman más fluidamente
 //const { verifyToken, requireInstructor, requireStudent } = require('../middleware/authMiddleware');
@@ -598,6 +598,15 @@ router.put("/:cursoId/category", modifyCategory);
  *         description: Error del servidor
  */
 router.get("/:courseId/report-info", getCourseReportInfo);
+
+router.get('/all', async (req, res) => {
+    try {
+        const courses = await getAllCourses();
+        res.json({ success: true, data: courses });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error al obtener los cursos', error: error.message });
+    }
+});
 
 
 module.exports = router;
