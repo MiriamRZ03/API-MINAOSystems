@@ -323,7 +323,12 @@ const getCoursesByStudentController = async (req, res = response) => {
 
   try {
     const courses = await getCoursesByStudent(sId);
-    return res.status(HttpStatusCodes.OK).json({ courses });
+
+    // Aquí aseguramos que la respuesta esté en el formato correcto
+    return res.status(HttpStatusCodes.OK).json({
+      success: true,        // Aseguramos que incluimos "success" como indicador
+      data: courses         // Cambiamos "courses" a "data" para que coincida con lo que espera el frontend
+    });
   } catch (error) {
     console.error("getCoursesByStudentController error:", error);
     return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -332,6 +337,7 @@ const getCoursesByStudentController = async (req, res = response) => {
     });
   }
 };
+
 
 const getCoursesByNameController = async (req, res = response) => {
   const { name } = req.query;
