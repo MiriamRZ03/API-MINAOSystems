@@ -105,7 +105,6 @@ const getAllCourses = async () => {
              WHERE c.state = 'Activo'`
         );
 
-        // Combinar nombre completo
         return rows.map(r => ({
             ...r,
             instructorName: `${r.instructorName} ${r.instructorSurname}`
