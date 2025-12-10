@@ -83,7 +83,7 @@ const getAllCoursesByInstructor = async (instructorUserId) => {
   }
 };
 /* -------------------------
-   Get all courses 
+   Get all courses available
 --------------------------*/
 
 const getAllCourses = async () => {
@@ -91,24 +91,18 @@ const getAllCourses = async () => {
     try {
         const [rows] = await dbConnection.execute(
             `SELECT 
-                c.cursoId,
-                c.name,
-                c.description,
-                c.category,
-                c.startDate,
-                c.endDate,
-                c.state,
-                u.userName AS instructorName,
-                u.paternalSurname AS instructorSurname
-             FROM Curso c
-             JOIN minao_users.User u ON c.instructorUserId = u.userId
-             WHERE c.state = 'Activo'`
+                cursoId,
+                name,
+                description,
+                category,
+                startDate,
+                endDate,
+                state
+             FROM Curso
+             WHERE state = 'Activo'`
         );
 
-        return rows.map(r => ({
-            ...r,
-            instructorName: `${r.instructorName} ${r.instructorSurname}`
-        }));
+        return rows;
 
     } finally {
         dbConnection.release();
