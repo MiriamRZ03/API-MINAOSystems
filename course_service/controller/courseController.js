@@ -8,6 +8,7 @@ const {
   updateCourseState,
   updateCourseDetails,
   getAllCoursesByInstructor,
+  getAllCourses,
   getCourseById,
   joinCourse,
   deleteStudentFromCourse,
@@ -203,6 +204,26 @@ const getCourseDetailById = async (req, res = response) => {
   }
 };
 
+const getAllCoursesController = async (req, res = response) => {
+  try {
+    const courses = await getAllCourses();
+
+    return res.status(HttpStatusCodes.OK).json({
+      success: true,
+      count: courses.length,
+      data: courses
+    });
+
+  } catch (error) {
+    console.error("getAllCoursesController error:", error);
+    return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+      error: true,
+      details: "Server error"
+    });
+  }
+};
+
+
 /* -------------------------------------
    Get Courses by Instructor
 --------------------------------------*/
@@ -305,6 +326,9 @@ const unenrollStudentFromCourse = async (req, res = response) => {
     });
   }
 };
+
+
+
 
 /* -------------------------------------
    Queries
@@ -590,5 +614,6 @@ module.exports = {
   unenrollStudentFromCourse,
   getCategory,
   modifyCategory,
+  getAllCoursesController,
   getCourseReportInfo
 };

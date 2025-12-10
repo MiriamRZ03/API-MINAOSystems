@@ -85,23 +85,40 @@ const getAllCoursesByInstructor = async (instructorUserId) => {
 /* -------------------------
    Get all courses 
 --------------------------*/
+
 const getAllCourses = async () => {
     const dbConnection = await connection.getConnection();
     try {
         const [rows] = await dbConnection.execute(
-            `SELECT c.cursoId, c.name, c.description, c.category, c.startDate, c.endDate, c.state, u.userName AS instructorName
+            `SELECT 
+                c.cursoId,
+                c.name,
+                c.description,
+                c.category,
+                c.startDate,
+                c.endDate,
+                c.state,
+                u.userName AS instructorName,
+                u.paternalSurname AS instructorSurname
              FROM Curso c
-             JOIN User u ON c.instructorUserId = u.userId
+             JOIN minao_users.User u ON c.instructorUserId = u.userId
              WHERE c.state = 'Activo'`
         );
-        return rows;
-    } catch (err) {
-        console.error("Error fetching courses:", err);
-        throw err;
+
+        // Combinar nombre completo
+        return rows.map(r => ({
+            ...r,
+            instructorName: `${r.instructorName} ${r.instructorSurname}`
+        }));
+
     } finally {
         dbConnection.release();
     }
 };
+
+
+
+
 /* -------------------------
    Update course details
 --------------------------*/

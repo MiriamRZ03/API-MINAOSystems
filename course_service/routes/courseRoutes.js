@@ -6,7 +6,8 @@ const {
         createCurso,
         setCourseState, 
         updateCourse, 
-        getCourseDetailById, 
+        getCourseDetailById,
+        getAllCoursesController, 
         getCoursesByInstructor, 
         joinCurso,
         getCoursesByStudentController, 
@@ -132,6 +133,9 @@ router.patch('/updateCourse', updateCourse);
  */
 router.patch('/setCourseState', setCourseState);
 
+
+
+router.get('/all', getAllCoursesController);
 /**
  * @swagger
  * /courses/{courseId}:
@@ -600,14 +604,13 @@ router.put("/:cursoId/category", modifyCategory);
  */
 router.get("/:courseId/report-info", getCourseReportInfo);
 
-router.get('/all', async (req, res) => {
-    try {
-        const courses = await getAllCourses();
-        res.json({ success: true, data: courses });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al obtener los cursos', error: error.message });
-    }
-});
+
+
+
+
+
+
+
 
 
 module.exports = router;
