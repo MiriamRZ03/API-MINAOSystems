@@ -8,7 +8,8 @@ const {
         updateCourse, 
         getCourseDetailById,
         getAllCoursesController, 
-        getCoursesByInstructor, 
+        getCoursesByInstructor,
+        getCoursesByInstructorJSON,
         joinCurso,
         getCoursesByStudentController, 
         getCoursesByNameController, 
@@ -181,6 +182,29 @@ router.get('/:courseId', getCourseDetailById);
  *         description: Server error
  */
 router.get('/instructor/:instructorId', getCoursesByInstructor);
+
+/**
+ * @swagger
+ * /courses/instructor/{instructorId}:
+ *   get:
+ *     summary: Get all courses created by an instructor
+ *     tags: [Courses]
+ *     parameters:
+ *       - in: path
+ *         name: instructorId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the instructor whose courses will be fetched
+ *     responses:
+ *       200:
+ *         description: Courses fetched successfully
+ *       404:
+ *         description: No courses found for this instructor
+ *       500:
+ *         description: Server error
+ */
+router.get('/instructor/:instructorId', getCoursesByInstructorJSON);
 
 /**
  * @swagger

@@ -227,7 +227,7 @@ const getAllCoursesController = async (req, res = response) => {
 /* -------------------------------------
    Get Courses by Instructor
 --------------------------------------*/
-const getCoursesByInstructor = async (req, res = response) => {
+const getCoursesByInstructorJSON = async (req, res = response) => {
   const { instructorId } = req.params;
   const id = parseInt(instructorId, 10);
 
@@ -252,6 +252,26 @@ const getCoursesByInstructor = async (req, res = response) => {
       details: "Server error"
     });
   }
+};
+
+const getCoursesByInstructor = async (req, res = response) => {
+    const { instructorId } = req.params;
+
+    try {
+        const result = await getAllCoursesByInstructor(instructorId);
+
+        return res.status(HttpStatusCodes.OK).json({
+            count: result.length,
+            message: "Query executed successfully",
+            result
+        });
+    } catch (error) {
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR, 
+            details: "Server error. Could not fetch courses"
+        });
+    }
 };
 
 /* -------------------------------------
@@ -603,6 +623,7 @@ module.exports = {
   setCourseState,
   getCourseDetailById,
   getCoursesByInstructor,
+  getCoursesByInstructorJSON,
   joinCurso,
   getCoursesByStudentController,
   getCoursesByNameController,

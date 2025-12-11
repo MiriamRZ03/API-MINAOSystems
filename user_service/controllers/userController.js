@@ -202,13 +202,14 @@ const uploadProfileImage = async (req, res = response) => {
         return res.status(400).json({ error: true, message: "No file uploaded" });
     }
 
-    const profileImageUrl = `/uploads/profile_images/${req.file.filename}`;
+    const profileImageUrl = `/profile_images/${req.file.filename}`; // URL accesible públicamente
 
     try {
         const result = await updateUserBasicProfile(userId, { profileImageUrl });
 
-        if (result.affectedRows > 0) {
+        if (result.success) {
             return res.status(200).json({
+                success: true,
                 message: "Profile image updated successfully",
                 profileImageUrl
             });
@@ -221,6 +222,7 @@ const uploadProfileImage = async (req, res = response) => {
         return res.status(500).json({ error: true, message: "Error processing the image update" });
     }
 };
+
 
 /* ----------------------- GET STUDENTS ----------------------- */
 
