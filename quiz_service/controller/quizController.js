@@ -2,7 +2,7 @@ const { request, response } = require("express");
 const HttpStatusCodes = require('../utils/enums');
 const jwt = require('jsonwebtoken');
 const { getStudentNames } = require("../service/userService");
-const {createQuiz, updateQuiz, deleteQuiz, getAllQuiz, getQuizByTitle, getQuizByDateCreation,
+const {createQuiz, getQuizForUpdate, updateQuiz, deleteQuiz, getAllQuiz, getQuizByTitle, getQuizByDateCreation,
     getQuizById, submitQuizAnswers, getQuizResult, getQuizResponsesList} = require ("../database/dao/quizDAO");
 
 const createQuestionnaire = async (req, res) => {
@@ -40,6 +40,46 @@ const createQuestionnaire = async (req, res) => {
         });
     }
 };
+
+const getQuizForUpdateController = async (req, res = response) => {
+    try {
+        const { quizId } = req.params;
+
+        if (!quizId) {
+            return res.status(HttpStatusCodes.BAD_REQUEST).json({
+                error: true,
+                statusCode: HttpStatusCodes.BAD_REQUEST,
+                details: "quizId is required in params."
+            });
+        }
+
+        const result = await getQuizForUpdate(quizId);
+
+        if (!result) {
+            return res.status(HttpStatusCodes.NOT_FOUND).json({
+                error: true,
+                statusCode: HttpStatusCodes.NOT_FOUND,
+                details: "Quiz not found."
+            });
+        }
+
+        return res.status(HttpStatusCodes.OK).json({
+            success: true,
+            message: "Quiz retrieved successfully.",
+            result
+        });
+
+    } catch (error) {
+        console.error("Error fetching quiz for update:", error);
+
+        return res.status(HttpStatusCodes.INTERNAL_SERVER_ERROR).json({
+            error: true,
+            statusCode: HttpStatusCodes.INTERNAL_SERVER_ERROR,
+            details: "Error fetching quiz information. Try again later."
+        });
+    }
+};
+
 
 const updateQuestionnaire = async (req, res = response) => {
     try {
@@ -335,5 +375,5 @@ const listQuizResponses = async (req, res) => {
 };
 
 
-module.exports = {createQuestionnaire, updateQuestionnaire, deleteQuestionnaire, getQuizzesByCourse, 
+module.exports = {createQuestionnaire, getQuizForUpdateController, updateQuestionnaire, deleteQuestionnaire, getQuizzesByCourse, 
     searchQuizByTitle, searchQuizByDate, getQuizDetailForUser, answerQuiz, viewQuizResult, listQuizResponses};
