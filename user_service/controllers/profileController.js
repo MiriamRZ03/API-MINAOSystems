@@ -50,29 +50,41 @@ const processProfileImage = async (file) => {
  * Actualiza nombre, apellidos y foto (Instructor o Student)
  */
 const updateUserProfileController = async (req, res) => {
-    const { id } = req.params;
-    const { userName, paternalSurname, maternalSurname } = req.body;
-
     try {
-        const profileImageUrl = await processProfileImage(req.file);
+        const { userID } = req.params;
 
-        // ✔ ahora sí llama a la función correcta
-        await updateUserBasicProfile(id, {
+        // 🛡️ Protección absoluta
+        const {
             userName,
             paternalSurname,
-            maternalSurname,
-            profileImageUrl
-        });
+            maternalSurname
+        } = req.body || {};
 
-        return res.status(200).json({
-            message: "User profile updated successfully",
-            profileImageUrl
+        if (!userName && !paternalSurname && !maternalSurname) {
+            return res.status(400).json({
+                success: false,
+                message: "No se enviaron datos para actualizar"
+            });
+        }
+
+        // 👉 aquí tu lógica de BD
+        const updatedUser = await updateUserInDB(
+            userID,
+            userName,
+            paternalSurname,
+            maternalSurname
+        );
+
+        return res.json({
+            success: true,
+            user: updatedUser
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("❌ Error updateUserProfileController:", error);
         return res.status(500).json({
-            message: "Error updating user profile"
+            success: false,
+            message: "Error interno del servidor"
         });
     }
 };

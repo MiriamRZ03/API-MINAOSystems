@@ -193,36 +193,6 @@ const verifyUser = async (req, res = response) => {
     }
 };
 
-/* ----------------------- UPLOAD PROFILE IMAGE ----------------------- */
-
-const uploadProfileImage = async (req, res = response) => {
-    const { userId } = req.params;
-
-    if (!req.file) {
-        return res.status(400).json({ error: true, message: "No file uploaded" });
-    }
-
-    const profileImageUrl = `/profile_images/${req.file.filename}`; // URL accesible públicamente
-
-    try {
-        const result = await updateUserBasicProfile(userId, { profileImageUrl });
-
-        if (result.success) {
-            return res.status(200).json({
-                success: true,
-                message: "Profile image updated successfully",
-                profileImageUrl
-            });
-        }
-
-        return res.status(500).json({ error: true, message: "Error updating profile image" });
-
-    } catch (error) {
-        console.error("Error updating profile image:", error);
-        return res.status(500).json({ error: true, message: "Error processing the image update" });
-    }
-};
-
 
 /* ----------------------- GET STUDENTS ----------------------- */
 
@@ -271,40 +241,48 @@ const findUserByEmailJSONController = async (req, res = response) => {
 
 const updateUserBasicProfileController = async (req, res) => {
     const { userId } = req.params;
+    console.log("🧪 update profile params:", req.params);
     const { userName, paternalSurname, maternalSurname, profileImageUrl } = req.body;
 
-    console.log("🔥 LLEGÓ AL CONTROLLER updateUserBasicProfileController");
-    console.log("userId:", req.params.userId);
-    console.log("body:", req.body);
-
+    const updatedData = {
+        userName,
+        paternalSurname,
+        maternalSurname,
+        profileImageUrl
+    };
+    console.log("🧪 update profile body:", req.body);
     try {
-        const result = await updateUserBasicProfile(userId, {
-            userName,
-            paternalSurname,
-            maternalSurname,
-            profileImageUrl
-        });
+        const result = await updateUserBasicProfile(userId, updatedData);
 
-        return res.status(200).json({
-            success: true,
-            data: result
+        if (result.affectedRows > 0) {
+            return res.status(200).json({
+                success: true,
+                message: "Perfil actualizado correctamente",
+                profileImageUrl: profileImageUrl || null
+            });
+        }
+
+        return res.status(400).json({
+            success: false,
+            message: "No se realizaron cambios"
         });
 
     } catch (error) {
+        console.error("❌ Error updateUserBasicProfileController:", error);
         return res.status(500).json({
             success: false,
-            message: error.message
+            message: "Error interno del servidor"
         });
     }
 };
+
 
 /* ----------------------- EXPORTS ----------------------- */
 
 module.exports = { 
     registerUser, 
     userLogin, 
-    verifyUser, 
-    uploadProfileImage, 
+    verifyUser,  
     fetchStudents, 
     findUserByEmailJSONController,
     updateUserBasicProfileController

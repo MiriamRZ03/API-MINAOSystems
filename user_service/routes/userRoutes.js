@@ -2,10 +2,9 @@ const { Router } = require('express');
 const router = Router();
 
 const { registerUser, userLogin, verifyUser, fetchStudents, findUserByEmailJSONController, updateUserBasicProfileController } = require('../controllers/userController');
-const uploadProfileImage = require("../middleware/uploadProfileImage");
 const { verifyToken } = require('../middleware/authMiddleware');
 
-// ✔ Importación corregida (el controlador correcto)
+
 const { updateUserProfileController } = require("../controllers/profileController");
 
 
@@ -97,61 +96,6 @@ router.post('/login', userLogin);
 router.post('/verify', verifyUser);
 
 
-/**
- * @swagger
- * /users/{id}:
- *   put:
- *     summary: Actualizar perfil básico de usuario (nombre, apellidos, foto)
- *     tags: [Users]
- *     consumes:
- *       - multipart/form-data
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *       - in: formData
- *         name: userName
- *         type: string
- *       - in: formData
- *         name: paternalSurname
- *         type: string
- *       - in: formData
- *         name: maternalSurname
- *         type: string
- *       - in: formData
- *         name: profileImage
- *         type: file
- *     responses:
- *       200:
- *         description: Perfil actualizado correctamente
- *       400:
- *         description: Datos inválidos
- *       500:
- *         description: Error del servidor
- */
-router.put('/:id',
-    verifyToken,
-    uploadProfileImage,
-    (req, res, next) => {
-        const { id } = req.params;
-
-        // Validar que un usuario solo pueda modificar su propio perfil
-        if (parseInt(id, 10) !== req.user.userId) {
-            return res.status(403).json({
-                error: true,
-                statusCode: 403,
-                details: "You can only edit your own profile"
-            });
-        }
-
-        next();
-    },
-    // ✔ Controlador correcto para actualizar perfil
-    updateUserProfileController
-);
-
 
 /**
  * @swagger
@@ -242,6 +186,8 @@ router.get('/findUserByEmailJSON/:email', findUserByEmailJSONController);
  *         description: Error interno del servidor
  */
 router.put('/updateBasicProfile/:userId', updateUserBasicProfileController);
+
+
 
 module.exports = router;
 

@@ -1,33 +1,63 @@
-const uploadProfileImage = multer({
-    storage,
-    limits: { fileSize: MAX_SIZE_BYTES },
-    fileFilter
-}).single('profileImage'); // nombre del campo de archivo
+/*const multer = require('multer');
+const path = require('path');
 
-// Middleware para manejar la carga de la imagen
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+// Configuración de almacenamiento
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads/profile_images'));
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const uniqueName =
+            Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+        cb(null, uniqueName);
+    }
+});
+
+// Filtro de formato de imagen
+const fileFilter = (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png'];
+
+    if (!allowed.includes(file.mimetype)) {
+        const err = new Error('Formato inválido');
+        err.code = 'INVALID_FORMAT';
+        return cb(err);
+    }
+
+    cb(null, true);
+};
+
+
+/*Middleware final
 const uploadProfileImageMiddleware = (req, res, next) => {
-    uploadProfileImage(req, res, function (err) {
+    uploadProfileImage(req, res, (err) => {
         if (err) {
-            console.error("Error al cargar la imagen:", err);
+            console.error('Error al cargar la imagen:', err);
+
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({
                     error: true,
-                    message: "El tamaño de la imagen no debe superar los 5 MB."
+                    message: 'El tamaño de la imagen no debe superar los 5 MB.'
                 });
             }
+
             if (err.code === 'INVALID_FORMAT') {
                 return res.status(400).json({
                     error: true,
-                    message: "Solo se permiten imágenes en formato JPEG y PNG."
+                    message: 'Solo se permiten imágenes JPEG y PNG.'
                 });
             }
+
             return res.status(500).json({
                 error: true,
-                message: "Error al cargar la imagen. Intenta de nuevo más tarde."
+                message: 'Error al cargar la imagen.'
             });
         }
-        next(); // Si no hay error, continúa con el siguiente middleware
+
+        next();
     });
 };
 
-module.exports = uploadProfileImageMiddleware;
+module.exports = uploadProfileImageMiddleware; */
